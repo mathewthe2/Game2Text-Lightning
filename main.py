@@ -1,10 +1,10 @@
 import sys
-from PyQt6 import QtWidgets, QtCore, QtGui
-from SnippingWidget import SnippingWidget
+from PyQt5 import QtWidgets, QtCore, QtGui
+from CaptureScreen import CaptureScreen
 
 WINDOW_WIDTH = 600
 WINDOW_HEIGHT = 400
-IMG_FILE_NAME = 'temp.png'
+IMG_FILE_NAME = 'temp.jpg'
   
 class Window(QtWidgets.QMainWindow):
 
@@ -12,9 +12,9 @@ class Window(QtWidgets.QMainWindow):
         super().__init__()
         self.active_x = 120
         self.active_y = 120
-        self.snippingWidget = SnippingWidget(app=QtWidgets.QApplication.instance())
+        self.snippingWidget = CaptureScreen()
         self.snippingWidget.onSnippingCompleted = self.onSnippingCompleted
-  
+
         # set the title
         self.setWindowTitle("Snip")
 
@@ -33,17 +33,15 @@ class Window(QtWidgets.QMainWindow):
 
     def clickMethod(self):
         self.hide()
-        self.snippingWidget.start() 
+        self.snippingWidget.start()
 
-    def onSnippingCompleted(self, frame):
+    def onSnippingCompleted(self, grabbedPixMap):
         self.show()
         self.setWindowState(QtCore.Qt.WindowState.WindowActive)
-        if frame is None:
+        if grabbedPixMap is None:
             return 
-
-        image = QtGui.QImage(frame, frame.shape[1], frame.shape[0], frame.strides[0], QtGui.QImage.Format.Format_RGB888)
-        image.save(IMG_FILE_NAME)
-        # pixmap = QPixmap.fromImage(image)
+        grabbedPixMap.save(IMG_FILE_NAME, 'jpg')
+        
         # self._pixmap = self.resizeImage(pixmap)
         # self.ui.label.setPixmap(self._pixmap)
 

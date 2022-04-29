@@ -1,6 +1,6 @@
 from PyQt5 import QtWidgets, QtCore, QtGui
-# import cv2
-# import numpy as np
+import cv2
+import numpy as np
 
 class CaptureScreen(QtWidgets.QSplashScreen):
     """QSplashScreen, that track mouse event for capturing screenshot."""
@@ -54,32 +54,35 @@ class CaptureScreen(QtWidgets.QSplashScreen):
  
             primaryScreen = QtGui.QGuiApplication.primaryScreen()
             grabbedPixMap = primaryScreen.grabWindow(0, self.origin.x(), self.origin.y(), self.end.x()-self.origin.x(), self.end.y()-self.origin.y())
-            # self.Pixmap_to_Opencv(grabbedPixMap)
+            img = self.Pixmap_to_Opencv(grabbedPixMap)
             # grabbedPixMap.save('test.jpg', 'jpg')
 
             if self.onSnippingCompleted is not None:
-                self.onSnippingCompleted(grabbedPixMap)
+                self.onSnippingCompleted((img, self.origin, self.end))
             self.close()
 
     def start(self):
         # QtWidgets.QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.CursorShape.CrossCursor))
         self.show()
 
-    # def Pixmap_to_Opencv(self,qtpixmap):
-    #     import cv2
-    #     import numpy as np
-    #     print('-----QPixmap_to_Opencv-----')
-    #     print('qtpixmap type:',type(qtpixmap))
-    #     qimg = qtpixmap.toImage()  # QPixmap-->QImage
-    #     print('qimg type:', type(qimg))
+    def Pixmap_to_Opencv(self,qtpixmap):
+        print('-----QPixmap_to_Opencv-----')
+        print('qtpixmap type:',type(qtpixmap))
+        qimg = qtpixmap.toImage()  # QPixmap-->QImage
+        print('qimg type:', type(qimg))
 
-    #     temp_shape = (qimg.height(), qimg.bytesPerLine() * 8 // qimg.depth())
-    #     temp_shape += (4,)
-    #     ptr = qimg.bits()
-    #     ptr.setsize(qimg.byteCount())
-    #     result = np.array(ptr, dtype=np.uint8).reshape(temp_shape)
-    #     result = result[..., :3]
-    #     cv2.imshow("result", result)
-    #     if not cv2.imwrite('test.jpg',result):
-    #         raise Exception("Could not write image")
-    #     return result
+        temp_shape = (qimg.height(), qimg.bytesPerLine() * 8 // qimg.depth())
+        temp_shape += (4,)
+        ptr = qimg.bits()
+        ptr.setsize(qimg.byteCount())
+        result = np.array(ptr, dtype=np.uint8).reshape(temp_shape)
+        result = result[..., :3]
+        img = cv2.cvtColor(result.astype(np.uint8), cv2.COLOR_BGR2RGB)
+        return img
+
+    def write_image(self, qtpixmap):
+        result = self.Pixmap_to_Opencv(qtpixmap)
+        cv2.imshow("result", result)
+        if not cv2.imwrite('test.jpg',result):
+            raise Exception("Could not write image")
+        return result

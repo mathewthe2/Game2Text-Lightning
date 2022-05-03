@@ -7,7 +7,7 @@ class Tooltip(QMainWindow):
     # app = QApplication(sys.argv)
     # widget = QWidget()
 
-    def __init__(self, text, x, y, w=320, h=200):
+    def __init__(self, text, x, y, w=800, h=300):
         super().__init__()
         # textLabel = QLabel(QWidget())
         # textLabel.setText(text)
@@ -20,7 +20,9 @@ class Tooltip(QMainWindow):
 
         self.title = QLabel(text, self) 
         self.title.setAlignment(Qt.AlignCenter) 
-        self.title.setFont(QFont('Times', 30))
+        self.title.setFont(QFont('Times', 12))
+        self.title.setWordWrap(True)
+        self.title.setFixedWidth(500)
         gridLayout.addWidget(self.title, 0, 0)
 
         self.setWindowTitle(text)

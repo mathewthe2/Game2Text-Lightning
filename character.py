@@ -1,10 +1,11 @@
 class Character():
-    def __init__(self, text, x1 , x2, y1, y2):
+    def __init__(self, text, x1 , x2, y1, y2, index=-1):
         self.text = text
         self.x1 = x1
         self.x2 = x2
         self.y1 = y1
         self.y2 = y2
+        self.index = index
 
     def touches_point(self, point):
         return pointInRect(point, self.rect())

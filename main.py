@@ -8,9 +8,10 @@ from tooltip import Tooltip
 
 WINDOW_WIDTH = 200
 WINDOW_HEIGHT = 200
-IMG_FILE_NAME = 'temp.jpg'
+# IMG_FILE_NAME = 'temp.jpg'
 result = Result([])
 tooltip = None
+current_r = None
   
 class Window(QtWidgets.QMainWindow):
 
@@ -104,20 +105,27 @@ class Window(QtWidgets.QMainWindow):
 def update_coords():
     # print(querymouseposition())
     x, y = querymouseposition()
-    r = result.detect_character((x, y))
-    if r:
-        y -= 300
-        global tooltip
-        if tooltip is None:
-            tooltip = Tooltip(r[0].text, x, y)
-            tooltip.show()
-        else:
-            tooltip.setWindowTitle(r[0].text)
-            tooltip.updateLabel(r[0].text)
-            tooltip.move(x, y)
-        # t = Tooltip(r[0].text, x, y)
-        # t.show()
-        print(', '.join([c.text for c in r]))
+    # r = result.detect_character((x, y))
+    boxes = result.detect_character((x, y))
+    if boxes:
+        global current_r
+        if boxes[0] != current_r:
+            current_r = boxes[0]
+            r = result.get_definition(boxes)
+            if r:
+                y += 50
+                global tooltip
+                if tooltip is None:
+                    tooltip = Tooltip(r, x, y)
+                    tooltip.show()
+                else:
+                    tooltip.setWindowTitle(r)
+                    tooltip.updateLabel(r)
+                    tooltip.move(x, y)
+                # t = Tooltip(r[0].text, x, y)
+                # t.show()
+                # print(', '.join([c.text for c in r]))
+                print(r)
 
 def main():
     App = QtWidgets.QApplication(sys.argv)

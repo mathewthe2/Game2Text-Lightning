@@ -1,5 +1,5 @@
 from tools import STR_Engine
-from .boxes import add_padding, combine_boxes
+from .boxes import add_padding, combine_boxes, point_distance_to_rect
 from .east_text_detector import East_Text_Detector
 
 class STR():
@@ -8,7 +8,6 @@ class STR():
     def __init__(self, engine=STR_Engine.EAST):
         self.engine = engine
 
-    # TODO: pass cursor coorindates to return closest box
     def get_cropped_images(self, image):
         if self.engine == STR_Engine.EAST:
             detector = East_Text_Detector(image)
@@ -19,3 +18,6 @@ class STR():
             return cropped_images
         else:
             return []
+
+    def get_closest_image(self, images, point):
+        return min(images, key=lambda x:point_distance_to_rect(point, x.box()))

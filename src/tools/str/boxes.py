@@ -1,4 +1,4 @@
-from math import dist
+from math import dist, sqrt
 
 # Older Python version
 # def dist(a, b):
@@ -32,6 +32,13 @@ def rect_distance(box1, box2):
         return y2 - y1b
     else:             # rectangles intersect
         return 0
+
+def point_distance_to_rect(point, rect):
+    x1, y1 = point
+    x2, y2, x2b, y2b = rect
+    dx = max(min(x2, x2b) - x1, 0, x1 - max(x2, x2b))
+    dy = max(min(y2, y2b) - y1, 0, y1 - max(y2, y2b))
+    return sqrt(dx*dx + dy*dy)
 
 def combine_box(box1, box2):
     x1, y1, x2, y2 = box1

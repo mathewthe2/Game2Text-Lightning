@@ -10,9 +10,14 @@ class CroppedImage():
         self.image = image[y:y + h, x:x + w]
         self.x = x
         self.y = y
+        self.x2 = x2
+        self.y2 = y2
 
     def get_image(self):
         return self.image
 
     def origin(self):
         return (self.x, self.y)
+
+    def box(self):
+        return (self.x, self.y, self.x2, self.y2)

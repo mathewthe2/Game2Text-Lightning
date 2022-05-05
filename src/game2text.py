@@ -85,14 +85,19 @@ class Game2Text(QtWidgets.QMainWindow):
             
     
     def lightning(self):
-        self.popup_timer.stop()
+        if (self.popup_timer.isActive()):
+            self.popup_timer.stop()
+            return
         screenshot = get_screenshot()
 
         # Scene Text Recognition
         cropped_images = self.str.get_cropped_images(screenshot)
+        closest_image = self.str.get_closest_image(cropped_images, cursor_position())
 
         # OCR
-        self.results = [self.ocr.get_boxed_characters(cropped_image.get_image(), cropped_image.origin()) for cropped_image in cropped_images]
+        # self.results = [self.ocr.get_boxed_characters(cropped_image.get_image(), cropped_image.origin()) for cropped_image in cropped_images]
+        boxed_characters = self.ocr.get_boxed_characters(closest_image.get_image(), closest_image.origin())
+        self.results = [boxed_characters]
 
         self.popup_timer.start(40)
 

@@ -1,4 +1,7 @@
+import numpy as np
+
 class ImageBox():
+
     def __init__(self, box, image, text=''):
         self.box = box
         self.image = image
@@ -26,6 +29,11 @@ class ImageBox():
     def rect(self):
         x1, y1, x2, y2 = self.box
         return x1, y1, self.width(), self.height()
+
+    def is_similar(self, candidate_image):
+        np_image = np.asarray(self.image)
+        np_candidate =  np.asarray(candidate_image.image)
+        return np_image.shape == np_candidate.shape and not(np.bitwise_xor(np_image,np_candidate).any())
 
 def pointInRect(point,rect):
     x1, y1, w, h = rect

@@ -9,14 +9,20 @@ from .paddle_detector import Paddle_Detector
 class STR():
     padding = 5
 
-    def __init__(self, engine=STR_Engine.PADDLE):
+    def __init__(self, engine=STR_Engine.PADDLE, is_combine_neighbors=True, combine_threshold=15):
         self.engine = engine
         self.paddle_engine = Paddle_Detector(paddle_models_path)
+        self.is_combine_neighbors = is_combine_neighbors
+        self.combine_threshold = combine_threshold
 
     #  input image pil, output list of image pils
     def get_cropped_image_boxes(self, image_object):
         if self.engine == STR_Engine.PADDLE:
             boxes = self.paddle_engine.detect(image_object.get_image(IMAGE_TYPE.NP))
+            if self.is_combine_neighbors:
+                boxes = combine_boxes(boxes, self.combine_threshold)
+            if self.padding > 0:
+                boxes = add_padding(boxes, self.padding)
             image = image_object.get_image(IMAGE_TYPE.PIL)
             image_boxes = [ImageBox(box, image.crop(box)) for box in boxes]
             return image_boxes

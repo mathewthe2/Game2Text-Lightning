@@ -1,4 +1,4 @@
-import numpy as np
+from imagehash import average_hash
 
 class ImageBox():
 
@@ -31,9 +31,11 @@ class ImageBox():
         return x1, y1, self.width(), self.height()
 
     def is_similar(self, candidate_image):
-        np_image = np.asarray(self.image)
-        np_candidate =  np.asarray(candidate_image.image)
-        return np_image.shape == np_candidate.shape and not(np.bitwise_xor(np_image,np_candidate).any())
+        cutoff = 2
+        return cutoff > abs(average_hash(self.image) - average_hash(candidate_image.image)) 
+        # np_image = np.asarray(self.image)
+        # np_candidate =  np.asarray(candidate_image.image)
+        # return np_image.shape == np_candidate.shape and not(np.bitwise_xor(np_image,np_candidate).any())
 
 def pointInRect(point,rect):
     x1, y1, w, h = rect

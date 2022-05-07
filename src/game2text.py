@@ -1,6 +1,7 @@
 
 import sys, time
 from PyQt5 import QtWidgets, QtCore, QtGui
+from numpy import False_
 from forwardscan import get_longest_match
 from screenshot import get_screenshot_image
 from screenshot.CaptureScreen import CaptureScreen
@@ -40,7 +41,7 @@ class Game2Text(QtWidgets.QMainWindow):
 
         # PYQT GUI
         
-        # setting  the geometry of window
+        # setting the geometry of window
         self.setGeometry(500, 500, WINDOW_WIDTH, WINDOW_HEIGHT)
 
         # set the title
@@ -120,6 +121,7 @@ class Game2Text(QtWidgets.QMainWindow):
 
     def select_area(self):
         self.popup_timer.stop()
+        self.recapture_timer.stop()
         self.hide()
         self.snippingWidget.start()
 
@@ -142,29 +144,42 @@ class Game2Text(QtWidgets.QMainWindow):
         self.image_boxes = image_boxes
         self.is_processing_image = False
         self.popup_timer.start(40)
-        self.recapture_timer.start(2000)
+        self.recapture_timer.start(100)
 
     def recapture(self):
-        if self.active_image_box and not self.is_processing_image and not self.tooltip.isVisible():
+        tooltipvisible = False
+        if self.tooltip:
+            tooltipvisible = self.tooltip.isVisible()
+        if self.active_image_box and not self.is_processing_image and not tooltipvisible:
             # capture new image
             screenshot = get_screenshot_image()
             new_capture = screenshot.crop(self.active_image_box.box)
             new_capture_box = ImageBox(self.active_image_box.box, new_capture)
             is_new_image = not self.active_image_box.is_similar(new_capture_box)
-            if (is_new_image):
-                self.is_processing_image = True
-                origin_x, origin_y, end_x, end_y = self.active_image_box.box
-                image_object = ImageObject(new_capture, IMAGE_TYPE.PIL)
-                image_boxes = self.str.get_cropped_image_boxes(image_object)
-                for image_box in image_boxes:
-                    image_box.set_text(self.ocr.get_text(image_box.image))
-                    image_box.adjust_to_origin((origin_x, origin_y))
-                    print(image_box.text)
-                self.image_boxes = image_boxes
-                self.active_image_box = new_capture_box
+            if not is_new_image:
+                return
+            self.is_processing_image = True
+            origin_x, origin_y, end_x, end_y = self.active_image_box.box
+            image_object = ImageObject(new_capture, IMAGE_TYPE.PIL)
+            image_boxes = self.str.get_cropped_image_boxes(image_object)
+            if len(image_boxes) <= 0:
                 self.is_processing_image = False
-                # self.popup_timer.start(40)
-
+                return
+            same_image_boxes = len(image_boxes) == len(self.image_boxes)
+            if same_image_boxes:
+                for i in range(0, len(image_boxes)):
+                    image_boxes[i].adjust_to_origin((origin_x, origin_y))
+                    if image_boxes[i].box != self.image_boxes[i].box:
+                        same_image_boxes = False
+            if same_image_boxes:
+                self.is_processing_image = False
+                return
+            for image_box in image_boxes:
+                image_box.set_text(self.ocr.get_text(image_box.image))
+                print(image_box.text)
+            self.image_boxes = image_boxes
+            self.active_image_box = new_capture_box
+            self.is_processing_image = False
 
     def closeEvent(self, event):
         if self.tooltip:

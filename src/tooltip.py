@@ -9,23 +9,27 @@ class Tooltip(QMainWindow):
 
     def __init__(self, text, x, y, w=800, h=300):
         super().__init__()
-        # textLabel = QLabel(QWidget())
-        # textLabel.setText(text)
 
         centralWidget = QWidget(self)          
         self.setCentralWidget(centralWidget)   
 
         gridLayout = QGridLayout(self)     
-        centralWidget.setLayout(gridLayout)  
+        gridLayout.setContentsMargins(0, 0, 0, 0)
+        centralWidget.setLayout(gridLayout) 
+
+        self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint) 
+        # self.setWindowFlags(Qt.WindowType.WindowStaysOnTopHint)
 
         self.title = QLabel(text, self) 
-        self.title.setAlignment(Qt.AlignCenter) 
-        self.title.setFont(QFont('Times', 12))
+        self.title.setAlignment(Qt.AlignVCenter) 
+        font = QFont('Times', 15)
+        # font.setPixelSize(self.height() * 0.8)
+        self.title.setFont(font)
         self.title.setWordWrap(True)
-        self.title.setFixedWidth(500)
+        # self.title.setFixedWidth(500)
         gridLayout.addWidget(self.title, 0, 0)
 
-        self.setWindowTitle(text)
+        # self.setWindowTitle(text)
         self.setGeometry(x, y, w, h)
     
     def updateLabel(self, text):

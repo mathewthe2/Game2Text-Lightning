@@ -26,4 +26,4 @@ def get_longest_match(s):
             return s[:80]
     return None
 
-print(get_longest_match('もっと'))
+# print(get_longest_match('もっと'))

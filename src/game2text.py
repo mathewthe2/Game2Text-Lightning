@@ -2,7 +2,7 @@
 import sys, time
 from PyQt5 import QtWidgets, QtCore, QtGui
 from numpy import False_
-from forwardscan import get_longest_match
+# from forwardscan import get_longest_match
 from screenshot import get_screenshot_image
 from screenshot.CaptureScreen import CaptureScreen
 from g2t_tools import STR_Engine, OCR_Engine
@@ -10,8 +10,8 @@ from g2t_tools.str import STR
 from g2t_tools.ocr import OCR
 from util.cursor import cursor_position
 from util.image_object import IMAGE_TYPE, ImageObject
-from tooltip import Tooltip
 from image_box import ImageBox
+from overlay_window import OverlayWindow
 
 # Optical Character Recognition Engine
 # class Capture_Mode(Enum):
@@ -26,7 +26,7 @@ class Game2Text(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
         self.str_engine = STR_Engine.PADDLE
-        self.ocr_engine = OCR_Engine.MANGA_OCR
+        self.ocr_engine = OCR_Engine.TESSERACT
 
         self.str = STR(self.str_engine)
         self.ocr = OCR(self.ocr_engine)
@@ -34,7 +34,7 @@ class Game2Text(QtWidgets.QMainWindow):
         self.active_image_box = None
         self.is_processing_image = False
 
-        self.tooltip = None
+        self.overlay_window = None
         self.image_boxes = []
         self.results = []
         self.characters = []
@@ -82,21 +82,18 @@ class Game2Text(QtWidgets.QMainWindow):
         if touched_image_boxes:
             glossary = touched_image_boxes[0].text
             box_x1, box_y1, box_w, box_h = touched_image_boxes[0].rect()
-            if self.tooltip is None:
-                self.tooltip = Tooltip(glossary, box_x1, box_y1)
-                self.tooltip.setFixedWidth(box_w)
-                self.tooltip.setFixedHeight(box_h)
+            if self.overlay_window is None:
+                self.overlay_window = OverlayWindow(glossary, box_x1, box_y1, box_w, box_h)
             else:
-                self.tooltip.setWindowTitle(glossary)
-                self.tooltip.updateLabel(glossary)
-                self.tooltip.setFixedWidth(box_w)
-                self.tooltip.setFixedHeight(box_h)
-                self.tooltip.move(box_x1, box_y1)
-            if not self.tooltip.isVisible():
-                self.tooltip.show()
+                self.overlay_window.setWindowTitle(glossary)
+                self.overlay_window.updateText(glossary)
+                self.overlay_window.resize_fixed(box_w, box_h)
+                self.overlay_window.move(box_x1, box_y1)
+            if not self.overlay_window.isVisible():
+                self.overlay_window.show()
         else:
-            if self.tooltip and not self.is_processing_image:
-                self.tooltip.hide()
+            if self.overlay_window and not self.is_processing_image:
+                self.overlay_window.hide()
             
     def lightning(self):
         if (self.popup_timer.isActive()):
@@ -144,13 +141,13 @@ class Game2Text(QtWidgets.QMainWindow):
         self.image_boxes = image_boxes
         self.is_processing_image = False
         self.popup_timer.start(40)
-        self.recapture_timer.start(100)
+        self.recapture_timer.start(1000)
 
     def recapture(self):
-        tooltipvisible = False
-        if self.tooltip:
-            tooltipvisible = self.tooltip.isVisible()
-        if self.active_image_box and not self.is_processing_image and not tooltipvisible:
+        overlay_window_visible = False
+        if self.overlay_window:
+            overlay_window_visible = self.overlay_window.isVisible()
+        if self.active_image_box and not self.is_processing_image and not overlay_window_visible:
             # capture new image
             screenshot = get_screenshot_image()
             new_capture = screenshot.crop(self.active_image_box.box)
@@ -182,8 +179,8 @@ class Game2Text(QtWidgets.QMainWindow):
             self.is_processing_image = False
 
     def closeEvent(self, event):
-        if self.tooltip:
-            self.tooltip.close()
+        if self.overlay_window:
+            self.overlay_window.close()
 
 def main():
     App = QtWidgets.QApplication(sys.argv)

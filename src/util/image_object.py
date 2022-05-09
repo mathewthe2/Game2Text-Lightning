@@ -19,9 +19,9 @@ class ImageObject():
         elif type == IMAGE_TYPE.NP:
             return np.asarray(self.image)
         elif type == IMAGE_TYPE.CV:
-            image_np = np.asarray(self.image)
+            open_cv_image = np.array(self.image.convert('RGB')) 
             # Convert RGB to BGR 
-            return image_np()[:, :, ::-1].copy() 
+            return open_cv_image[:, :, ::-1].copy() 
 
     def cv_to_pil(self, image):
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)

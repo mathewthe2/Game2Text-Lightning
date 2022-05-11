@@ -1,4 +1,4 @@
-from g2t_tools.str.boxes import combine_boxes, rect_distance
+from util.box import combine_boxes, rect_distance
 
 class DetectionBox():
     def __init__(self, box, text_boxes):

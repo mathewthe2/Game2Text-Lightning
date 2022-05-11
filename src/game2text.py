@@ -6,12 +6,13 @@ from screenshot.CaptureScreen import CaptureScreen
 from g2t_tools import STR_Engine, OCR_Engine
 from g2t_tools.str import STR
 from g2t_tools.ocr import OCR
+from util.box import box_to_qt
 from util.cursor import cursor_position
 from util.image_object import IMAGE_TYPE, ImageObject
 from image_box import ImageBox
 from detection_box import grouped_boxes
-from overlay_window import OverlayWindow
 from web_overlay import WebOverlay
+from blur_window import BlurWindow
 
 # Optical Character Recognition Engine
 # class Capture_Mode(Enum):
@@ -36,9 +37,9 @@ class Game2Text(QtWidgets.QMainWindow):
         self.status = ''
 
         self.overlay_window = None
+        self.blur_window = None
         self.detection_boxes = []
         self.text_boxes = []
-        # self.image_boxes = []
         self.results = []
         self.characters = []
 
@@ -98,8 +99,19 @@ class Game2Text(QtWidgets.QMainWindow):
             # else:
             # self.overlay_window.setWindowTitle(glossary)
             # self.overlay_window.updateText(glossary, box_x1, box_y1, box_w, box_h)
-            text_boxes = touched_boxes[0].text_boxes
-            self.overlay_window.updateText(text_boxes)
+            # text_boxes = touched_boxes[0].text_boxes
+
+            # TODO: merge touched_boxes into one grouped_box
+            touched_box = touched_boxes[0]
+            self.overlay_window.updateText(touched_box)
+            touched_box.add_padding(10)
+            blur_x, blur_y, blur_w, blur_h = box_to_qt(touched_box.box)
+            if self.blur_window is None:
+                self.blur_window = BlurWindow(blur_x, blur_y, blur_w, blur_h)
+            else:
+                self.blur_window.resetGeometry(blur_x, blur_y, blur_w, blur_h)
+            self.blur_window.show()
+
             # self.popup_timer.stop()
             # self.overlay_window.resize_fixed(box_w, box_h)
             # self.overlay_window.move(box_x1, box_y1)
@@ -108,6 +120,8 @@ class Game2Text(QtWidgets.QMainWindow):
         else:
             if self.overlay_window and not self.is_processing_image:
                 self.overlay_window.hide()
+            if self.blur_window and not self.is_processing_image:
+                self.blur_window.hide()
             
     def lightning(self):
         pass
@@ -152,7 +166,7 @@ class Game2Text(QtWidgets.QMainWindow):
         self.text_boxes = self.ocr.get_text(image_object)
         self.detection_boxes = grouped_boxes(self.text_boxes, origin=(origin.x(), origin.y()))
         self.is_processing_image = False
-        self.overlay_window = WebOverlay('', origin.x(), origin.y(), abs(end.x()-origin.x()), abs(end.y()-origin.y()))
+        self.overlay_window = WebOverlay(origin.x(), origin.y(), abs(end.x()-origin.x()), abs(end.y()-origin.y()))
         self.popup_timer.start(40)
         self.recapture_timer.start(500)
 
@@ -167,7 +181,7 @@ class Game2Text(QtWidgets.QMainWindow):
             new_capture_box = ImageBox(self.active_image_box.box, new_capture)
             is_new_image = not self.active_image_box.is_similar(new_capture_box)
             if not is_new_image:
-                print('same image')
+                # print('same image')
                 return
             self.is_processing_image = True
             self.status = 'recapturing...'

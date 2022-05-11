@@ -10,10 +10,11 @@ class STR_Engine(Enum):
 
 # Optical Character Recognition Engine
 class OCR_Engine(Enum):
-    MANGA_OCR = 1
-    PADDLE_OCR = 2
-    SPACE_OCR = 3
-    GOOGLE_VISION = 4
+    TESSERACT = 1
+    MANGA_OCR = 2
+    PADDLE_OCR = 3
+    SPACE_OCR = 4
+    GOOGLE_VISION = 5
 
 bundle_dir = Path(os.path.dirname(os.path.abspath(__file__))).parents[1]
 WIN_TESSERACT_DIR = Path(bundle_dir, "resources", "bin", "win", "tesseract")

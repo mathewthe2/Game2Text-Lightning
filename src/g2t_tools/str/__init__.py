@@ -9,7 +9,7 @@ from .paddle_detector import Paddle_Detector
 class STR():
     padding = 5
 
-    def __init__(self, engine=STR_Engine.PADDLE, is_combine_neighbors=True, combine_threshold=15):
+    def __init__(self, engine=STR_Engine.PADDLE, is_combine_neighbors=False, combine_threshold=15):
         self.engine = engine
         self.paddle_engine = Paddle_Detector(paddle_models_path)
         self.is_combine_neighbors = is_combine_neighbors

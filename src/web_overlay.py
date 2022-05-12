@@ -1,12 +1,10 @@
 import sys, os
-from PyQt5.QtWidgets import QWidget, QApplication
 from PyQt5.QtWebEngineWidgets import QWebEngineView
-from PyQt5.QtCore import QDir, QUrl, Qt
+from PyQt5.QtCore import QUrl, Qt
 from pathlib import Path
 
 sys.argv.append("--disable-web-security")
 bundle_dir = Path(os.path.dirname(os.path.abspath(__file__))).parent
-# rikaisama_path = Path(bundle_dir, 'resources', 'rikaisama')
 rikaisama_path = 'file:///resources/rikaisama/'
 web_path = 'file:///resources/web/'
 
@@ -59,7 +57,7 @@ class WebOverlay(QWebEngineView):
             return
         text_boxes = detection_box.text_boxes
         script = 'var templateContainer = document.getElementById("container-template");'
-        # clear oldtextboxes
+        # clear old textboxes
         for existing_index in range(self.containers):
                 script += 'document.body.removeChild(document.getElementById("container-{}"));'.format(existing_index)
         # add new textboxes
@@ -81,31 +79,4 @@ class WebOverlay(QWebEngineView):
             script += 'document.body.appendChild(containerClone);'
             script += 'myScaleFunction();'
         self.page().runJavaScript(script)
-        self.containers = len(text_boxes)
-
-    def testText(self, text, x=0, y=0, w=300, h=50):
-        script = 'var templateContainer = document.getElementById("container-template");'
-        script += 'var containerClone = templateContainer.cloneNode(templateContainer);'
-        script += 'containerClone.id = "container-1";'
-        script += 'containerClone.style.width = "{}px";'.format(w)
-        script += 'containerClone.style.height = "{}px";'.format(h)
-        script += 'containerClone.style.top = "{}px";'.format(y)
-        script += 'containerClone.style.left = "{}px";'.format(x)
-        script += 'var textElement = document.createElement("div");textElement.className = "scale--js";'
-        script += 'textElement.innerHTML = "{}";'.format(text)
-        script += 'containerClone.appendChild(textElement);'
-        script += 'containerClone.hidden = false;'
-        script += 'document.body.appendChild(containerClone);'
-        script += 'myScaleFunction();'
-        self.page().runJavaScript(script)
-
-
-# if __name__ == "__main__":
-#     app = QApplication(sys.argv)
-#     mw = WebOverlay(0, 0, 550, 300)
-#     mw.loadFinished.connect(lambda x: mw.testText('家のお使いだったから'))
-#     mw.setWindowFlags(Qt.WindowType.WindowStaysOnTopHint)
-#     mw.setAttribute(Qt.WA_NoSystemBackground, False)
-#     mw.setAttribute(Qt.WA_TranslucentBackground, False)
-#     mw.show()
-#     sys.exit(app.exec())
+        self.containers = len(text_boxes)    

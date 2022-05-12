@@ -61,6 +61,13 @@ class CaptureScreen(QtWidgets.QSplashScreen):
                 self.onSnippingCompleted((img, self.origin, self.end))
             self.close()
 
+    def captureArea(self, box):
+        x1, y1, x2, y2 = box
+        primaryScreen = QtGui.QGuiApplication.primaryScreen()
+        grabbedPixMap = primaryScreen.grabWindow(0, x1, y1, x2-x1, y2-y1)
+        img = self.Pixmap_to_Opencv(grabbedPixMap)
+        return img
+
     def start(self):
         # QtWidgets.QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.CursorShape.CrossCursor))
         self.show()

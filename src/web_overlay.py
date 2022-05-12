@@ -15,7 +15,7 @@ class WebOverlay(QWebEngineView):
     ready = False
     containers = 0
 
-    def __init__(self, x, y, w=800, h=300):
+    def __init__(self, x=0, y=0, w=800, h=300):
         super(WebOverlay, self).__init__()
         
         self.setGeometry(x, y, w, h)
@@ -40,6 +40,7 @@ class WebOverlay(QWebEngineView):
 
     def load_html(self):
         raw_html = '<html><head><meta charset="utf-8" />'
+        raw_html += '<script src="qrc:///qtwebchannel/qwebchannel.js"></script>'
         raw_html += '''
         <style>
             @font-face {{

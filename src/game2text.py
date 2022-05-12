@@ -1,7 +1,6 @@
 
 import sys, time
 from PyQt5 import QtWidgets, QtCore, QtGui
-from screenshot import get_screenshot_image
 from screenshot.CaptureScreen import CaptureScreen
 from g2t_tools import OCR_Engine
 from g2t_tools.ocr import OCR
@@ -26,7 +25,7 @@ class Game2Text(QtWidgets.QMainWindow):
         self.is_processing_image = False
         self.status = ''
 
-        self.overlay_window = None
+        self.overlay_window = WebOverlay()
         self.blur_window = None
         self.detection_boxes = []
         self.text_boxes = []
@@ -130,19 +129,19 @@ class Game2Text(QtWidgets.QMainWindow):
             overlay_window_visible = self.overlay_window.isVisible()
         if self.active_image_box and not self.is_processing_image and not overlay_window_visible:
             # capture new image
-            screenshot = get_screenshot_image()
-            new_capture = screenshot.crop(self.active_image_box.box)
-            new_capture_box = ImageBox(self.active_image_box.box, new_capture)
+            screenshot = self.snippingWidget.captureArea(self.active_image_box.box)
+            new_capture = ImageObject(screenshot, IMAGE_TYPE.CV)
+
+            new_capture_box = ImageBox(self.active_image_box.box, new_capture.get_image(IMAGE_TYPE.PIL))
             is_new_image = not self.active_image_box.is_similar(new_capture_box)
             if not is_new_image:
-                # print('same image')
                 return
             self.is_processing_image = True
             self.status = 'recapturing...'
             print(self.status)
             origin_x, origin_y, end_x, end_y = self.active_image_box.box
-            image_object = ImageObject(new_capture, IMAGE_TYPE.PIL)
-            text_boxes = self.ocr.get_text(image_object)
+            # image_object = ImageObject(new_capture, IMAGE_TYPE.PIL)
+            text_boxes = self.ocr.get_text(new_capture)
             self.status = 'got text...'
             print(self.status)
             same_text_boxes = len(text_boxes) == len(self.text_boxes)

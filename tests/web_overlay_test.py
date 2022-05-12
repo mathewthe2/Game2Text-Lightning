@@ -3,7 +3,7 @@ from PyQt5.QtCore import Qt
 import sys, os
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.dirname(SCRIPT_DIR))
-from web_overlay import WebOverlay
+from src.web_overlay import WebOverlay
 
 class WebOverlayTest():
     def __init__(self):

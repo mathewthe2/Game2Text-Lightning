@@ -8,6 +8,9 @@ bundle_dir = Path(os.path.dirname(os.path.abspath(__file__))).parent
 rikaisama_path = 'file:///resources/rikaisama/'
 web_path = 'file:///resources/web/'
 
+FONT_REGULAR = web_path + 'fonts/M_PLUS_1p/MPLUS1p-Regular.ttf'
+FONT_BOLD = web_path + 'fonts/M_PLUS_1p/MPLUS1p-Medium.ttf'
+
 class WebOverlay(QWebEngineView):
     ready = False
     containers = 0
@@ -37,6 +40,22 @@ class WebOverlay(QWebEngineView):
 
     def load_html(self):
         raw_html = '<html><head><meta charset="utf-8" />'
+        raw_html += '''
+        <style>
+            @font-face {{
+                font-family: M_PLUS_1p;
+                src: url('{}');
+            }}
+            @font-face {{
+                font-family: M_PLUS_1p;
+                src: url('{}');
+                font-weight: bold;
+            }}
+            div {{
+                font-family: M_PLUS_1p;
+            }}
+        </style>
+        '''.format(FONT_REGULAR, FONT_BOLD)
         raw_html += '<link rel="stylesheet" href="{}">'.format(web_path + 'scale.css')
         raw_html += '<script src="{}"></script>'.format(web_path + 'scale.js')
         raw_html += '</head><body>'

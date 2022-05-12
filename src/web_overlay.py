@@ -1,46 +1,32 @@
-from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtCore import QUrl, Qt
+import sys, os
+from PyQt5.QtWidgets import QWidget, QApplication
 from PyQt5.QtWebEngineWidgets import QWebEngineView
+from PyQt5.QtCore import QDir, QUrl, Qt
 from pathlib import Path
-import os, sys
-
-from util.box import box_to_qt
 
 sys.argv.append("--disable-web-security")
 bundle_dir = Path(os.path.dirname(os.path.abspath(__file__))).parent
+# rikaisama_path = Path(bundle_dir, 'resources', 'rikaisama')
 rikaisama_path = 'file:///resources/rikaisama/'
 web_path = 'file:///resources/web/'
 
-class WebOverlay(QtWidgets.QWidget):
-    dirty = True
+class WebOverlay(QWebEngineView):
+    ready = False
+    containers = 0
+
     def __init__(self, x, y, w=800, h=300):
         super(WebOverlay, self).__init__()
-
+        
         self.setGeometry(x, y, w, h)
         self.resize_fixed(w, h)
-
+   
         self.setWindowFlags(
-            self.windowFlags() | Qt.WindowType.WindowStaysOnTopHint | Qt.FramelessWindowHint
+            Qt.WindowType.WindowStaysOnTopHint | Qt.FramelessWindowHint
         )
-        
-        layout = QtWidgets.QVBoxLayout()
-        self.setLayout(layout)
-        # limit widget AND layout margins
-        layout.setContentsMargins(0, 0, 0, 0)
-        self.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
-
-        self.browser = QWebEngineView()
-        # self.setAttribute(Qt.WA_NoSystemBackground, True)
+        self.setAttribute(Qt.WA_NoSystemBackground, True)
         self.setAttribute(Qt.WA_TranslucentBackground, True)
-        self.browser.page().setBackgroundColor(Qt.transparent)
-        layout.addWidget(self.browser)
-
-        # create a "placeholder" widget for the screen grab geometry
-        self.grabWidget = QtWidgets.QWidget()
-        self.grabWidget.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
-        layout.addWidget(self.grabWidget)
-
+        self.page().setBackgroundColor(Qt.transparent)
+        self.load_html()
 
     def resize_fixed(self, w, h):
         self.setFixedWidth(w)
@@ -48,23 +34,15 @@ class WebOverlay(QtWidgets.QWidget):
         self.w = w                  
         self.h = h
 
-    def updateText(self, detection_box):
-        text_boxes = detection_box.text_boxes
-        # grouped_box = detection_box.box
-        
-        # Update Text
+    def setReady(self, ready):
+        self.ready = ready 
+
+    def load_html(self):
         raw_html = '<html><head><meta charset="utf-8" />'
         raw_html += '<link rel="stylesheet" href="{}">'.format(web_path + 'scale.css')
         raw_html += '<script src="{}"></script>'.format(web_path + 'scale.js')
         raw_html += '</head><body>'
-        for text_box in text_boxes:
-            text = text_box.text
-            x, y, x2, y2 = text_box.box
-            w = text_box.width()
-            h = text_box.height()
-            raw_html += '<div class="scale__container--js" style="width:' + str(w) + 'px; height:' + str(h) + 'px; position:absolute; top: ' + str(y) + 'px; left: ' + str(x) + 'px;">'
-            raw_html += '<div class="scale--js">' + text + '</div>'
-            raw_html += '</div>'
+        raw_html += '<div id="container-template" class="scale__container--js" style="hidden: true; position: absolute"></div>'
         raw_html += '<script src="{}"></script>'.format(rikaisama_path + 'jedict.js')
         raw_html += '<script src="{}"></script>'.format(rikaisama_path + 'deinflect.js')
         raw_html += '<script src="{}"></script>'.format(rikaisama_path + 'data.js')
@@ -72,68 +50,62 @@ class WebOverlay(QtWidgets.QWidget):
         raw_html += '<script src="{}"></script>'.format(rikaisama_path + 'options.js')
         raw_html += '<script src="{}"></script>'.format(rikaisama_path + 'raikaichan.js')
         raw_html += '</body></html>'
-        self.browser.setHtml(raw_html, baseUrl=QUrl.fromLocalFile(str(Path(__file__).resolve().parent)))  
+        self.setHtml(raw_html, baseUrl=QUrl.fromLocalFile(str(Path(__file__).resolve().parent)))  
+        self.loadFinished.connect(lambda x: self.setReady(True))
 
-    # https://stackoverflow.com/a/57742146
-    def updateMask(self):
-        # get the *whole* window geometry, including its titlebar and borders
-        frameRect = self.frameGeometry()
+    def updateText(self, detection_box):
+        if not self.ready:
+            self.loadFinished.connect(lambda x: self.updateText(detection_box))
+            return
+        text_boxes = detection_box.text_boxes
+        script = 'var templateContainer = document.getElementById("container-template");'
+        # clear oldtextboxes
+        for existing_index in range(self.containers):
+                script += 'document.body.removeChild(document.getElementById("container-{}"));'.format(existing_index)
+        # add new textboxes
+        for index, text_box in enumerate(text_boxes):
+            text = text_box.text
+            x, y, x2, y2 = text_box.box
+            w = text_box.width()
+            h = text_box.height()
+            script += 'var containerClone = templateContainer.cloneNode(templateContainer);'
+            script += 'containerClone.id = "container-{}";'.format(index)
+            script += 'containerClone.style.width = "{}px";'.format(w)
+            script += 'containerClone.style.height = "{}px";'.format(h)
+            script += 'containerClone.style.top = "{}px";'.format(y)
+            script += 'containerClone.style.left = "{}px";'.format(x)
+            script += 'var textElement = document.createElement("div");textElement.className = "scale--js";'
+            script += 'textElement.innerHTML = "{}";'.format(text)
+            script += 'containerClone.appendChild(textElement);'
+            script += 'containerClone.hidden = false;'
+            script += 'document.body.appendChild(containerClone);'
+            script += 'myScaleFunction();'
+        self.page().runJavaScript(script)
+        self.containers = len(text_boxes)
 
-        # get the grabWidget geometry and remap it to global coordinates
-        grabGeometry = self.grabWidget.geometry()
-        grabGeometry.moveTopLeft(self.grabWidget.mapToGlobal(QtCore.QPoint(0, 0)))
+    def testText(self, text, x=0, y=0, w=300, h=50):
+        script = 'var templateContainer = document.getElementById("container-template");'
+        script += 'var containerClone = templateContainer.cloneNode(templateContainer);'
+        script += 'containerClone.id = "container-1";'
+        script += 'containerClone.style.width = "{}px";'.format(w)
+        script += 'containerClone.style.height = "{}px";'.format(h)
+        script += 'containerClone.style.top = "{}px";'.format(y)
+        script += 'containerClone.style.left = "{}px";'.format(x)
+        script += 'var textElement = document.createElement("div");textElement.className = "scale--js";'
+        script += 'textElement.innerHTML = "{}";'.format(text)
+        script += 'containerClone.appendChild(textElement);'
+        script += 'containerClone.hidden = false;'
+        script += 'document.body.appendChild(containerClone);'
+        script += 'myScaleFunction();'
+        self.page().runJavaScript(script)
 
-        # get the actual margins between the grabWidget and the window margins
-        left = frameRect.left() - grabGeometry.left()
-        top = frameRect.top() - grabGeometry.top()
-        right = frameRect.right() - grabGeometry.right()
-        bottom = frameRect.bottom() - grabGeometry.bottom()
 
-        # reset the geometries to get "0-point" rectangles for the mask
-        frameRect.moveTopLeft(QtCore.QPoint(0, 0))
-        grabGeometry.moveTopLeft(QtCore.QPoint(0, 0))
-
-        # create the base mask region, adjusted to the margins between the
-        # grabWidget and the window as computed above
-        region = QtGui.QRegion(frameRect.adjusted(left, top, right, bottom))
-        # "subtract" the grabWidget rectangle to get a mask that only contains
-        # the window titlebar, margins and panel
-        region -= QtGui.QRegion(grabGeometry)
-        self.setMask(region)
-
-        # update the grab size according to grabWidget geometry
-        # self.widthLabel.setText(str(self.grabWidget.width()))
-        # self.heightLabel.setText(str(self.grabWidget.height()))
-
-    def resizeEvent(self, event):
-        super(WebOverlay, self).resizeEvent(event)
-        # the first resizeEvent is called *before* any first-time showEvent and
-        # paintEvent, there's no need to update the mask until then; see below
-        if not self.dirty:
-            self.updateMask()
-
-    def paintEvent(self, event):
-        super(WebOverlay, self).paintEvent(event)
-        # on Linux the frameGeometry is actually updated "sometime" after show()
-        # is called; on Windows and MacOS it *should* happen as soon as the first
-        # non-spontaneous showEvent is called (programmatically called: showEvent
-        # is also called whenever a window is restored after it has been
-        # minimized); we can assume that all that has already happened as soon as
-        # the first paintEvent is called; before then the window is flagged as
-        # "dirty", meaning that there's no need to update its mask yet.
-        # Once paintEvent has been called the first time, the geometries should
-        # have been already updated, we can mark the geometries "clean" and then
-        # actually apply the mask.
-        if self.dirty:
-            self.updateMask()
-            self.dirty = False
-
-# if __name__ == '__main__':
-#     import sys
-#     app = QtWidgets.QApplication(sys.argv)
-#     w = WebOverlay(500, 500, 500, 500)
-#     w.show()
-#     # w.testText('家のお使いだったから')
-#     w.blur_window = BlurWindow(500, 500, 100, 100)
-#     w.blur_window.show()
-#     sys.exit(app.exec_())
+# if __name__ == "__main__":
+#     app = QApplication(sys.argv)
+#     mw = WebOverlay(0, 0, 550, 300)
+#     mw.loadFinished.connect(lambda x: mw.testText('家のお使いだったから'))
+#     mw.setWindowFlags(Qt.WindowType.WindowStaysOnTopHint)
+#     mw.setAttribute(Qt.WA_NoSystemBackground, False)
+#     mw.setAttribute(Qt.WA_TranslucentBackground, False)
+#     mw.show()
+#     sys.exit(app.exec())

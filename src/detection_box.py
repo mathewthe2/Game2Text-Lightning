@@ -25,9 +25,12 @@ class DetectionBox():
         x1, y1, x2, y2 = self.box
         return x1, y1, self.width(), self.height()
 
-    def add_padding(self, padding=5):
+    def padded_box(self, padding=5):
         x, y, x2, y2 = self.box
-        self.box = (max(0, x-padding), max(0, y-padding), x2+padding, y2+padding)
+        return (max(0, x-padding), max(0, y-padding), x2+padding, y2+padding)
+
+    def add_padding(self, padding):
+        self.box = self.padded_box(padding)
 
 def grouped_boxes(text_boxes, threshold=30, origin=0):
     combined_boxes = combine_boxes([text_box.box for text_box in text_boxes], threshold)
@@ -38,7 +41,7 @@ def grouped_boxes(text_boxes, threshold=30, origin=0):
         for text_box in text_boxes:
             if rect_distance(combined_box, text_box.box) == 0:
                 detection_box.text_boxes.append(text_box)
-        detection_box.add_padding()
+        detection_box.add_padding(15)
         detection_boxes.append(detection_box)
     return detection_boxes
 

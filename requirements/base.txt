@@ -1,0 +1,12 @@
+BlurWindow==1.2.1
+fbs-tutorial==1.0.0
+imutils==0.5.4
+mss==6.1.0
+numpy==1.19.5
+opencv-python==4.6.0.66
+paddleocr==2.5
+paddlepaddle==2.2.2
+Pillow==8.4.0
+pyinstaller==4.10
+pynput==1.7.6
+QtAwesome==1.1.1

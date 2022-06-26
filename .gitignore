@@ -3,8 +3,7 @@ venv/
 .env/
 
 # Resources
-resources/models/manga-ocr-base
-resources/models/paddleocr
+src/main/resources/models/paddleocr
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

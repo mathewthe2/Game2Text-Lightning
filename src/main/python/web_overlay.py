@@ -7,7 +7,7 @@ sys.argv.append("--disable-web-security")
 
 # rikaisama_path = 'file:///resources/rikaisama/'
 # web_path = 'file:///resources/web/'
-
+RIKAISAMA_JS_LIST = ['radicals.js', 'kanji.js', 'jedict.js', 'deinflect.js', 'data.js', 'config.js', 'options.js', 'raikaichan.js']
 FONT_REGULAR = 'web/fonts/M_PLUS_1p/MPLUS1p-Regular.ttf'
 FONT_BOLD = 'web/fonts/M_PLUS_1p/MPLUS1p-Medium.ttf'
 
@@ -69,12 +69,8 @@ class WebOverlay(QWebEngineView):
         raw_html += '<script src="{}"></script>'.format(getResourceUrl("web/scale.js"))
         raw_html += '</head><body>'
         raw_html += '<div id="container-template" class="scale__container--js" style="hidden: true; position: absolute"></div>'
-        raw_html += '<script src="{}"></script>'.format(getResourceUrl('rikaisama/jedict.js'))
-        raw_html += '<script src="{}"></script>'.format(getResourceUrl('rikaisama/deinflect.js'))
-        raw_html += '<script src="{}"></script>'.format(getResourceUrl('rikaisama/data.js'))
-        raw_html += '<script src="{}"></script>'.format(getResourceUrl('rikaisama/config.js'))
-        raw_html += '<script src="{}"></script>'.format(getResourceUrl('rikaisama/options.js'))
-        raw_html += '<script src="{}"></script>'.format(getResourceUrl('rikaisama/raikaichan.js'))
+        for js_file in RIKAISAMA_JS_LIST:
+            raw_html += '<script src="{}"></script>'.format(getResourceUrl('rikaisama/' + js_file))
         raw_html += '</body></html>'
         self.setHtml(raw_html, baseUrl=QUrl.fromLocalFile(appctxt.get_resource("web")))
         self.loadFinished.connect(lambda x: self.setReady(True))

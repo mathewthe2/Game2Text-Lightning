@@ -58,6 +58,13 @@ var rcxData = {
 				isKanji: true
 			};
 		}
+		if (rcxDicList['kanji@local'] == null) {
+			rcxDicList['kanji@local'] = {
+				name: 'Kanji',
+				id: 'kanji@local',
+				isKanji: true
+			};
+		}
 
 		//	rcxMain.global().rcxDicList = rcxDicList;
 
@@ -76,13 +83,14 @@ var rcxData = {
 			if (oa[i].match(/^(.+?)#/)) {
 				let dic = rcxDicList[RegExp.$1];
 				if (dic) {
+					console.log('pushing', dic);
 					this.dicList.push(dic);
 					done[dic.id] = true;
 				}
 			}
 		}
 		
-		this.dicList[0] = new RcxFakeDic();
+		this.dicList.unshift(new RcxFakeDic());
 
 		// anything new is added at the end
 		let addedNew = false;
@@ -111,7 +119,6 @@ var rcxData = {
 
 		if (addedNew) {
 			// show dictionary tab if we have a new dictionary
-			// window.openDialog('//anjsub.com/mary/src/6ka/options.xul', '', 'chrome,centerscreen,resizable', 'dic');
 		}
 
 		// FF 3.7a workaround; @@ revisit later
@@ -470,10 +477,14 @@ var rcxData = {
 		this.searchSkipped = 0;
 		let ds = this.selected;
 		do {
+			console.log('dic list wtf', this.dicList);
 			let dic = this.dicList[ds];
+			console.log('dic', dic);
 			if ((!noKanji) || (!dic.isKanji)) {
 				let e;
+				console.log('is kanji?', dic.isKanji);
 				if (dic.isKanji) e = this.kanjiSearch(word.charAt(0));
+				// if (true) e = this.kanjiSearch(word.charAt(0));
 					else e = this._wordSearch(word, dic, null);
 				if (e) {
 					if (ds != 0) e.title = dic.name;
@@ -616,8 +627,10 @@ var rcxData = {
 		i = kanji.charCodeAt(0);
 		if (i < 0x3000) return null;
 
+		this.kanjiData = kanjiData;
+
 		if (!this.kanjiData) {
-			this.kanjiData = rcxFile.read((typeof(rcxKanjiURI) == 'string') ? rcxKanjiURI : '//anjsub.com/mary/src/6ka/kanji.dat');
+			this.kanjiData = rcxFile.read((typeof(rcxKanjiURI) == 'string') ? rcxKanjiURI : 'kanji.dat');
 		}
 
 		kde = this.find(this.kanjiData, kanji);
@@ -684,7 +697,8 @@ var rcxData = {
 		if (entry == null) return '';
 
 		if (!this.ready) this.init();
-		if (!this.radData) this.radData = rcxFile.readArray('//anjsub.com/mary/src/6ka/radicals.dat');
+		this.radData = radData;
+		if (!this.radData) this.radData = rcxFile.readArray('radicals.dat');
 
 		b = [];
 

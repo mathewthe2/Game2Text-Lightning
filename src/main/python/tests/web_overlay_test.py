@@ -8,7 +8,7 @@ from web_overlay import WebOverlay
 class WebOverlayTest():
     def __init__(self):
         self.web_overlay = WebOverlay(0, 0, 550, 300)
-        self.web_overlay.setWindowFlags(Qt.WindowType.WindowStaysOnTopHint)
+        self.web_overlay.setWindowFlags(Qt.WindowStaysOnTopHint)
         self.web_overlay.setAttribute(Qt.WA_NoSystemBackground, False)
         self.web_overlay.setAttribute(Qt.WA_TranslucentBackground, False)
 

@@ -13,7 +13,7 @@ class WebOverlayTest():
         self.web_overlay.setAttribute(Qt.WA_TranslucentBackground, False)
 
     def run(self):
-        self.web_overlay.loadFinished.connect(lambda x: self.testText('家のお使いだったから'))
+        self.web_overlay.loadFinished.connect(lambda x: self.testText('出荷を担当するから'))
         self.web_overlay.show()
 
     def testText(self, text, x=0, y=0, w=300, h=50):

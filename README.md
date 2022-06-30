@@ -80,3 +80,8 @@ Fix imports for *paddleocr\ppocr\utils\e2e_utils\pgnet_pp_utils.py*.
 from paddleocr.ppocr.utils.e2e_utils.extract_textpoint_slow import *
 from paddleocr.ppocr.utils.e2e_utils.extract_textpoint_fast import generate_pivot_list_fast, restore_poly
 ```
+
+## Acknowledgments
+- JMDict
+- Paddle OCR
+- Rikaichan

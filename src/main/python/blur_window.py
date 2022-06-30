@@ -40,11 +40,6 @@ class BlurWindow(QtWidgets.QWidget):
         self.setFixedHeight(h)
         self.w = w
         self.h = h
-    
-    def resetGeometry(self, x, y, w, h):
-        self.resize_fixed(w, h)
-        self.move(x, y)
-
 
 if __name__ == '__main__':
     import sys

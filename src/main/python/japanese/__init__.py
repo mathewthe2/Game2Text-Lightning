@@ -15,15 +15,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os.path
+from fbs_runtime.application_context.PyQt5 import ApplicationContext
 from .deinflect import Deinflector
 from .dictionary import Dictionary
 from .translate import Translator
 
-
 def initLanguage():
-    directory = os.path.dirname(__file__)
+    appctxt = ApplicationContext()
     return Translator(
-        Deinflector(os.path.join(directory, u'deinflect.json')),
-        Dictionary(os.path.join(directory, u'dictionary.db'))
+        Deinflector(appctxt.get_resource('yomichan/deinflect.json')),
+        Dictionary(appctxt.get_resource('yomichan/dictionary.db'))
     )

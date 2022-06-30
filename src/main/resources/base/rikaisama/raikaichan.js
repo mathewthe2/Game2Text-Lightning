@@ -924,41 +924,10 @@ var rcxMain = {
 
   /* Get the pitch accent of the last hilited word if present. If inExpression is not provided,
      will get the pitch accent for the hilited word's expression and reading */
-  getPitchAccent: function(inExpression, inReading)
+  getPitchAccent: function(inExpression, inReading, callback)
   {
-	  console.error('getPitchAccent not implemented' );
-	  return "";
     try
     {
-      // If we have not yet made a connection to the database
-      if(this.pitchDB == null)
-      {
-        // Get the path of the pitch accent database
-        var pitchDbPath = Components.classes["@mozilla.org/file/directory_service;1"]
-        .getService(Components.interfaces.nsIProperties)
-        .get("ProfD", Components.interfaces.nsILocalFile);
-        pitchDbPath.append("extensions");
-        pitchDbPath.append(rcxMain.id); // GUID of extension
-        pitchDbPath.append("pitch");
-        pitchDbPath.append("pitch_accents.sqlite");
-
-        // Is the pitch accent database could not be found, return
-        if(!pitchDbPath.exists())
-        {
-          return "";
-        }
-
-        // Get file pointer to the pitch accent sqlite database
-        var pitchDbFile = Components.classes['@mozilla.org/file/local;1']
-         .createInstance(Components.interfaces.nsILocalFile);
-        pitchDbFile.initWithPath(pitchDbPath.path);
-
-        // Open the pitch accent database
-        this.pitchDB = Components.classes['@mozilla.org/storage/service;1']
-         .getService(Components.interfaces.mozIStorageService)
-         .openDatabase(pitchDbFile);
-      }
-
       // If the caller provided an expression/reading, use them, otherwise use the
       // expression/reading of the hilited word
       if(inExpression)
@@ -987,43 +956,46 @@ var rcxMain = {
         var reading = entryData[2];
       }
 
-      // Form the SQL used to query the pitch accent
-      if(!reading)
-      {
-        // Reference: https://developer.mozilla.org/en-US/docs/Storage
-        var stPitch = this.pitchDB.createStatement("SELECT pitch FROM Dict WHERE expression='"
-          + expression + "'");
-      }
-      else
-      {
-        var stPitch = this.pitchDB.createStatement("SELECT pitch FROM Dict WHERE expression='"
-          + expression + "' AND reading='" + reading + "'");
-      }
-
       var pitch = "";
+      expressionQuery = reading ? [expression, reading] : [expression];
+      // handler.get_pitch(expressionQuery, function(result) {
+      //   pitch = result;
+      //      // If user wants to hide the part-of-speech unless , or | is present
+      // if(rcxConfig.hidepitchaccentpos)
+      // {
+      //   if((pitch.indexOf(",") == -1) && (pitch.indexOf("|") == -1))
+      //   {
+      //     pitch = pitch.replace(/\(.*?\)/g, "")
+      //   }
+      // }
 
-      try
-      {
-        stPitch.executeStep();
+      // callback(pitch);
+      // });
+      // if(!reading)
+      // {
+      //   handler.get_pitch([expression], function(result) {
+      //       pitch = result;
+      //   });
+      // }
+      // else
+      // {
+      //  handler.get_pitch([expression, reading], function(result) {
+      //      pitch = result;
+      //      console.error('call back here?');
+      //      console.error(result);
+      //   });
+      // }
 
-        // Get the result of the query
-        pitch = stPitch.row.pitch;
-      }
-      finally
-      {
-        stPitch.reset();
-      }
+      // // If user wants to hide the part-of-speech unless , or | is present
+      // if(rcxConfig.hidepitchaccentpos)
+      // {
+      //   if((pitch.indexOf(",") == -1) && (pitch.indexOf("|") == -1))
+      //   {
+      //     pitch = pitch.replace(/\(.*?\)/g, "")
+      //   }
+      // }
 
-      // If user wants to hide the part-of-speech unless , or | is present
-      if(rcxConfig.hidepitchaccentpos)
-      {
-        if((pitch.indexOf(",") == -1) && (pitch.indexOf("|") == -1))
-        {
-          pitch = pitch.replace(/\(.*?\)/g, "")
-        }
-      }
-
-      return pitch;
+      // return pitch;
     }
     catch(ex)
     {
@@ -1121,11 +1093,24 @@ var rcxMain = {
 
   }, /* getKnownWordIndicatorText */
 
-
   // Send the highlighted word to Anki's Real-Time Import plugin
   sendToAnki: function()
   {
-	  	  console.error('sentToAnki not implemented' );
+    if(this.lastFound[0].data)
+    {
+      var entryData = this.lastFound[0].data[0][0].match(/^(.+?)\s+(?:\[(.*?)\])?\s*\/(.+)\//);
+      var expression = entryData[1];
+      var reading = entryData[2] ? entryData[2] : '';
+      var definition = entryData [3] ? entryData[3] : '';
+      handler.send_to_anki(JSON.stringify({
+        'expression': expression,
+        'reading': reading,
+        'definition': definition,
+        'sentence': this.sentence
+      }));
+    }
+  
+
 	  return;
 	  
     // Create message header
@@ -2012,7 +1997,7 @@ var rcxMain = {
     var epwingDefText = "";
 
     // If user wants to display all entries from the same dictionary
-    if(rcxConfig.epwingshowallentries)
+    if(true) // (rcxConfig.epwingshowallentries)
     {
       epwingText = "";
 
@@ -2090,6 +2075,8 @@ var rcxMain = {
   {
     // Trim whitespace
     epwingText = rcxMain.trimEnd(entryText);
+
+    console.error('epwing')
 
     // Remove text that matches the user's regex
     if(rcxConfig.epwingremoveregex != '')
@@ -2212,7 +2199,9 @@ var rcxMain = {
 
         if(rcxConfig.showpitchaccent)
         {
-          pitch = rcxMain.getPitchAccent(pitchExpression, pitchReading);
+          rcxMain.getPitchAccent(pitchExpression, pitchReading, function(result){
+            pitch = result;
+          });
         }
 
         // Apply color and pitch
@@ -2940,7 +2929,7 @@ var rcxMain = {
 
 	configPage: function()
   {
-		window.openDialog('//anjsub.com/mary/src/6ka/options.xul', '', 'chrome,centerscreen,resizable');
+		window.openDialog('options.xul', '', 'chrome,centerscreen,resizable');
 	},
 
 
@@ -2985,6 +2974,10 @@ var rcxMain = {
 			this.hidePopup();
 			this.clearHi();
 			break;
+
+    case 83: // s - save to anki
+      this.sendToAnki();
+    break;
 
 		case parseInt(rcxConfig.kbalternateview): // a - Alternate popup location
       this.allowOneTimeSuperSticky();
@@ -3255,6 +3248,9 @@ var rcxMain = {
 		// text node
 		'#text': true,
 
+    // Game2Text 
+    'BR': true,
+
 		// font style
 		'FONT': true,
 		'TT': true,
@@ -3472,30 +3468,30 @@ var rcxMain = {
 
 		tdata.uofsNext = 1;
 
-		if (!rp) {
-			this.clearHi();
-			this.hidePopup();
-			return 0;
-		}
+		// if (!rp) {
+		// 	this.clearHi();
+		// 	this.hidePopup();
+		// 	return 0;
+		// }
 
-		if ((ro < 0) || (ro >= rp.data.length)) {
-			this.clearHi();
-			this.hidePopup();
-			return 0;
-		}
+		// if ((ro < 0) || (ro >= rp.data.length)) {
+		// 	this.clearHi();
+		// 	this.hidePopup();
+		// 	return 0;
+		// }
 
 		// @@@ check me
-		let u = rp.data.charCodeAt(ro);
-		if ((isNaN(u)) ||
-			((u != 0x25CB) &&
-			((u < 0x3001) || (u > 0x30FF)) &&
-			((u < 0x3400) || (u > 0x9FFF)) &&
-			((u < 0xF900) || (u > 0xFAFF)) &&
-			((u < 0xFF10) || (u > 0xFF9D)))) {
-			this.clearHi();
-			this.hidePopup();
-			return -2;
-		}
+		// let u = rp.data.charCodeAt(ro);
+		// if ((isNaN(u)) ||
+		// 	((u != 0x25CB) &&
+		// 	((u < 0x3001) || (u > 0x30FF)) &&
+		// 	((u < 0x3400) || (u > 0x9FFF)) &&
+		// 	((u < 0xF900) || (u > 0xFAFF)) &&
+		// 	((u < 0xFF10) || (u > 0xFF9D)))) {
+		// 	this.clearHi();
+		// 	this.hidePopup();
+		// 	return -2;
+		// }
 
     // Configure this.inlineNames based on user settings
     this.configureInlineNames();
@@ -3505,7 +3501,6 @@ var rcxMain = {
 
     // The text here will be used to lookup the word
 		var text = this.getTextFromRange(rp, ro, selEndList, 20);
-	//	console.log(text);
 
     // The text from the currently selection node + 50 more characters from the next nodes
 		var sentence = this.getTextFromRange(rp, 0, selEndList, rp.data.length + 50);
@@ -3680,7 +3675,6 @@ var rcxMain = {
       // Normal popup
       else
       {
-		 // console.log(rcxData.makeHtml(e))
         this.showPopup(rcxMain.getKnownWordIndicatorText() + rcxData.makeHtml(e), tdata.prevTarget, tdata.pos);
       }
     }
@@ -4110,6 +4104,7 @@ var rcxMain = {
 	lookupBoxKey: function(ev) {
 		switch (ev.keyCode) {
 		case 13:
+      // console.log('ev?', ev.target.value)
 			this.lookupSearch(ev.target.value);
 			ev.stopPropagation();
 			break;

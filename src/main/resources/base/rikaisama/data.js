@@ -482,7 +482,6 @@ var rcxData = {
 			console.log('dic', dic);
 			if ((!noKanji) || (!dic.isKanji)) {
 				let e;
-				console.log('is kanji?', dic.isKanji);
 				if (dic.isKanji) e = this.kanjiSearch(word.charAt(0));
 				// if (true) e = this.kanjiSearch(word.charAt(0));
 					else e = this._wordSearch(word, dic, null);
@@ -783,6 +782,7 @@ var rcxData = {
 
 			b.push('<table class="k-main-tb"><tr><td valign="top">');
 			b.push(box);
+			b.push('<div>anki here</div>');
 			b.push('<span class="k-kanji">' + entry.kanji + '</span><br/>');
 			if (!rcxConfig.hidedef) b.push('<div class="k-eigo">' + entry.eigo + '</div>');
 			b.push('<div class="k-yomi">' + yomi + '</div>');
@@ -865,28 +865,35 @@ var rcxData = {
 				}
 
 				if (e[2]) {
+					b.push('<div class="w-anki">+ anki</div>');
 					if (pK == e[1]) k = '\u3001 <span class="w-kana">' + e[2] + '</span>';
 						else k += '<span class="w-kanji">' + e[1] + '</span> &#32; <span class="w-kana">' + e[2] + '</span>';
 					pK = e[1];
 				}
 				else {
+					b.push('<div>+ anki</div>');
 					k += '<span class="w-kana">' + e[1] + '</span>';
 					pK = '';
 				}
 				b.push(k);
 
         // Add pitch accent right after the reading
-        if (rcxConfig.showpitchaccent)
+        if (true) //(rcxConfig.showpitchaccent)
         {
-          var pitchAccent = rcxMain.getPitchAccent(e[1], e[2]);
-
-          if(pitchAccent && (pitchAccent.length > 0))
-          {
-            b.push('<span class="w-conj"> ' + pitchAccent + '</span>');
-          }
+          rcxMain.getPitchAccent(e[1], e[2], function(pitchAccent) {
+			console.error(pitchAccent);
+			if(pitchAccent && (pitchAccent.length > 0))
+			{
+			  b.push('<span class="w-conj"> ' + pitchAccent + '</span>');
+			}
+		  });
+        //   if(pitchAccent && (pitchAccent.length > 0))
+        //   {
+        //     b.push('<span class="w-conj"> ' + pitchAccent + '</span>');
+        //   }
         }
 
-				if (entry.data[i][1]) b.push(' <span class="w-conj">(' + entry.data[i][1] + ')</span>');
+		if (entry.data[i][1]) b.push(' <span class="w-conj">(' + entry.data[i][1] + ')</span>');
 
         // Add frequency
         if(rcxConfig.showfreq)
@@ -924,7 +931,9 @@ var rcxData = {
 			if (entry.more) b.push('...<br/>');
 		}
 
-		return b.join('');
+		var result = b.join('');
+		console.log('b', b);
+		return result;
 	},
 
 

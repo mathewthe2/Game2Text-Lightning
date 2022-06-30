@@ -5,7 +5,7 @@ from PyQt5 import QtWidgets, QtCore, QtGui
 from screenshot.CaptureScreen import CaptureScreen
 from g2t_tools import OCR_Engine, paddle_models_path
 from g2t_tools.ocr import OCR
-from util.box import box_to_qt
+from util.box import box_to_qt, combine_boxes
 from util.cursor import cursor_position
 from util.image_object import IMAGE_TYPE, ImageObject
 from image_box import ImageBox
@@ -81,11 +81,7 @@ class Game2Text(QtWidgets.QMainWindow):
             touched_box = touched_boxes[0]
             self.overlay_window.updateText(touched_box)
             blur_x, blur_y, blur_w, blur_h = box_to_qt(touched_box.padded_box(30))
-            if self.blur_window is None:
-                self.blur_window = BlurWindow(blur_x, blur_y, blur_w, blur_h)
-            else:
-                # self.blur_window = BlurWindow(blur_x, blur_y, blur_w, blur_h)
-                self.blur_window.resetGeometry(blur_x, blur_y, blur_w, blur_h)
+            self.blur_window = BlurWindow(blur_x, blur_y, blur_w, blur_h)
             self.blur_window.show()
 
             # self.popup_timer.stop()
@@ -121,6 +117,7 @@ class Game2Text(QtWidgets.QMainWindow):
         self.detection_boxes = grouped_boxes(self.text_boxes, origin=(origin.x(), origin.y()))
         self.is_processing_image = False
         self.overlay_window = WebOverlay(origin.x(), origin.y(), abs(end.x()-origin.x()), abs(end.y()-origin.y()))
+        self.overlay_window.setScreenshot(image_object)
         self.popup_timer.start(40)
         self.recapture_timer.start(500)
 
@@ -141,7 +138,7 @@ class Game2Text(QtWidgets.QMainWindow):
             self.status = 'recapturing...'
             print(self.status)
             origin_x, origin_y, end_x, end_y = self.active_image_box.box
-            # image_object = ImageObject(new_capture, IMAGE_TYPE.PIL)
+            self.overlay_window.setScreenshot(new_capture)
             text_boxes = self.ocr.get_text(new_capture)
             self.status = 'got text...'
             print(self.status)
@@ -159,6 +156,9 @@ class Game2Text(QtWidgets.QMainWindow):
             self.is_processing_image = False
 
     def closeEvent(self, event):
+        self.popup_timer.stop()
+        self.recapture_timer.stop()
+        self.snippingWidget.close()
         if self.overlay_window:
             self.overlay_window.close()
         if self.blur_window:

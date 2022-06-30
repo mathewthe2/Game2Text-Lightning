@@ -31,6 +31,15 @@
 	min-width: 100px;	
 }
 
+/* anki row */
+
+#rikaichan-window .w-anki {
+	font-size: 18px;
+	color: #FFFFFF;
+	margin-right: 0.7em;
+	float: right;
+}
+
 /* used for word definitions */
 
 #rikaichan-window .w-kanji {

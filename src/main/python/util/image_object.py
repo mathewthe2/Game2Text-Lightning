@@ -2,6 +2,8 @@ import numpy as np
 import cv2
 from PIL import Image
 from enum import Enum
+import base64
+from io import BytesIO
 
 class IMAGE_TYPE(Enum):
     CV = 1
@@ -23,5 +25,11 @@ class ImageObject():
             return open_cv_image[:, :, ::-1].copy() 
 
     def cv_to_pil(self, image):
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        # image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         return Image.fromarray(image)
+
+    def base_64(self):
+        buffered = BytesIO()
+        self.image.save(buffered, format="JPEG")
+        img_byte = buffered.getvalue()
+        return  base64.b64encode(img_byte).decode()

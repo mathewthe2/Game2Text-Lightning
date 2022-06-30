@@ -1,12 +1,13 @@
 import sys, os
+import json
 from fbs_runtime.application_context.PyQt5 import ApplicationContext
 from PyQt5.QtWebEngineWidgets import QWebEngineView
+from PyQt5.QtWebChannel import QWebChannel
 from PyQt5.QtCore import QUrl, Qt
+from call_handler import CallHandler
 
 sys.argv.append("--disable-web-security")
 
-# rikaisama_path = 'file:///resources/rikaisama/'
-# web_path = 'file:///resources/web/'
 RIKAISAMA_JS_LIST = ['radicals.js', 'kanji.js', 'jedict.js', 'deinflect.js', 'data.js', 'config.js', 'options.js', 'raikaichan.js']
 FONT_REGULAR = 'web/fonts/M_PLUS_1p/MPLUS1p-Regular.ttf'
 FONT_BOLD = 'web/fonts/M_PLUS_1p/MPLUS1p-Medium.ttf'
@@ -21,8 +22,15 @@ class WebOverlay(QWebEngineView):
     containers = 0
 
     def __init__(self, x=0, y=0, w=800, h=300):
-        super(WebOverlay, self).__init__()
-        
+        super(WebOverlay, self).__init__()    
+
+        # Web channel
+        self.channel = QWebChannel()
+        self.handler = CallHandler()
+        self.channel.registerObject('handler', self.handler)
+        self.page().setWebChannel(self.channel)
+
+        # Window Attributes
         self.setGeometry(x, y, w, h)
         self.resize_fixed(w, h)
    
@@ -71,9 +79,20 @@ class WebOverlay(QWebEngineView):
         raw_html += '<div id="container-template" class="scale__container--js" style="hidden: true; position: absolute"></div>'
         for js_file in RIKAISAMA_JS_LIST:
             raw_html += '<script src="{}"></script>'.format(getResourceUrl('rikaisama/' + js_file))
+        raw_html += '''
+        <script language="JavaScript">
+         new QWebChannel(qt.webChannelTransport, function (channel) {
+          window.handler = channel.objects.handler;
+         // handler.send_to_anki(JSON.stringify({"a": 3}));
+        });
+        </script>
+        '''
         raw_html += '</body></html>'
         self.setHtml(raw_html, baseUrl=QUrl.fromLocalFile(appctxt.get_resource("web")))
         self.loadFinished.connect(lambda x: self.setReady(True))
+
+    def setScreenshot(self, screenshot):
+        self.handler.setScreenshot(screenshot)
 
     def updateText(self, detection_box):
         if not self.ready:
@@ -87,6 +106,7 @@ class WebOverlay(QWebEngineView):
         # add new textboxes
         for index, text_box in enumerate(text_boxes):
             text = text_box.text
+            postText = '' if (index >= len(text_boxes)-1) else '<br/><span hidden>' + ''.join([textbox.text for textbox in text_boxes[index+1:]]) + '</span>'
             x, y, x2, y2 = text_box.box
             w = text_box.width()
             h = text_box.height()
@@ -97,7 +117,7 @@ class WebOverlay(QWebEngineView):
             script += 'containerClone.style.top = "{}px";'.format(y)
             script += 'containerClone.style.left = "{}px";'.format(x)
             script += 'var textElement = document.createElement("div");textElement.className = "scale--js";'
-            script += 'textElement.innerHTML = "{}";'.format(text)
+            script += 'textElement.innerHTML = "{}";'.format(text+postText)
             script += 'containerClone.appendChild(textElement);'
             script += 'containerClone.hidden = false;'
             script += 'document.body.appendChild(containerClone);'

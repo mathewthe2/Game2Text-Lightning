@@ -1,6 +1,9 @@
 import json
+import logging
 import urllib.request
 import time
+from threading import Thread 
+from .anki_model import AnkiModel
 
 # from .word_audio import get_jpod_audio_base64
 # ANKI_MODELS_FILENAME = 'ankimodels.yaml'
@@ -29,14 +32,33 @@ class AnkiConnect():
         except:
             return 'Error: Failed to connect to Anki.'
 
-    def fetch_anki_fields(self, model_name):
-        field_names = self.invoke('modelFieldNames', modelName=model_name)
-        return field_names
-        # result = {}
-        # for model_name in model_names:
-        #     field_names = self.invoke('modelFieldNames', {'modelName': model_name})
-        #     result[model_name] = field_names
-        # return result
+    def _fetch_fields_for_model(self, model_name, result, index):
+        try:
+            field_names = self.invoke('modelFieldNames', modelName=model_name)
+            result[index] = field_names
+        except:
+            logging.error('Failed to fetch fields')
+        return True
+
+    def fetch_anki_models(self):
+        models = self.fetch_models()
+        model_names = list(models.keys())
+        field_lists = [{} for x in model_names]
+        threads = []
+        for index, model_name in enumerate(model_names):
+            process = Thread(target=self._fetch_fields_for_model, args=[model_name, field_lists, index])
+            process.start()
+            threads.append(process)
+        for process in threads:
+            process.join()
+        result = []
+        if len(model_names) == len(field_lists):
+            result = [AnkiModel(
+                id=models[model_name], 
+                model_name=model_name,
+                fields=field_lists[i])
+                for i, model_name in enumerate(model_names)]
+        return result
 
     def fetch_anki_decks(self):
         result = self.invoke('deckNames')
@@ -64,12 +86,6 @@ class AnkiConnect():
         definition = note_data['definition']
         reading = note_data['reading']
         sentence = note_data['sentence']
-        # if 'screenshot' in note_data:
-        #     # TODO: start new thread to save image
-        #     result = self.store_picture(note_data['screenshot'])
-        #     print('screenshot saved')
-        # screenshot = note_data['screenshot'] if 'screenshot' in note_data else ''
-        # print('screenshot', screenshot)
 
         note = {
             "deckName": "Default",
@@ -112,23 +128,23 @@ class AnkiConnect():
 if __name__  == '__main__':
     ac = AnkiConnect('Mining')
 
-    from PIL import Image
-    import base64
-    from io import BytesIO
-    image = Image.open(r'C:\Users\user\Documents\Game2Text-Lightning\src\main\persona.jpg')
-    buffered = BytesIO()
-    image.save(buffered, format="JPEG")
-    img_byte = buffered.getvalue()
-    data = base64.b64encode(img_byte).decode()
-    note_data = {}
-    note_data['screenshot'] = data
-    note_data['expression'] = 'exp'
-    note_data['reading'] = 'read'
-    note_data['sentence'] = 'sent'
-    note_data['definition'] = 'def'
-    print(ac.create_anki_note(note_data))
+    # from PIL import Image
+    # import base64
+    # from io import BytesIO
+    # image = Image.open(r'C:\Users\user\Documents\Game2Text-Lightning\src\main\persona.jpg')
+    # buffered = BytesIO()
+    # image.save(buffered, format="JPEG")
+    # img_byte = buffered.getvalue()
+    # data = base64.b64encode(img_byte).decode()
+    # note_data = {}
+    # note_data['screenshot'] = data
+    # note_data['expression'] = 'exp'
+    # note_data['reading'] = 'read'
+    # note_data['sentence'] = 'sent'
+    # note_data['definition'] = 'def'
+    # print(ac.create_anki_note(note_data))
 
-    # print(ac.fetch_anki_decks())
+    print(ac.fetch_anki_fields())
     # print(ac.fetch_models())
     # print(ac.fetch_anki_fields('Basic'))
     # print(ac.create_anki_note())

@@ -1,11 +1,11 @@
 
-import sys, time
+import sys
 from fbs_runtime.application_context.PyQt5 import ApplicationContext
-from PyQt5 import QtWidgets, QtCore, QtGui
+from PyQt5 import QtWidgets, QtCore
 from screenshot.CaptureScreen import CaptureScreen
 from g2t_tools import OCR_Engine, paddle_models_path
 from g2t_tools.ocr import OCR
-from util.box import box_to_qt, combine_boxes
+from util.box import box_to_qt
 from util.cursor import cursor_position
 from util.image_object import IMAGE_TYPE, ImageObject
 from image_box import ImageBox
@@ -166,7 +166,6 @@ class Game2Text(QtWidgets.QMainWindow):
 
 def main():
     appctxt = ApplicationContext()       # 1. Instantiate ApplicationContext
-    # App = QtWidgets.QApplication(sys.argv)
     window = Game2Text(appctxt)
     window.show()
     exit_code = appctxt.app.exec_()      # 2. Invoke appctxt.app.exec_()

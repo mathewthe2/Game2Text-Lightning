@@ -1,6 +1,6 @@
 from PyQt5.QtCore import QSettings
 
-class Settings():
+class SettingsController():
     def __init__(self):
         self.settings = QSettings("Game2Text", "App")
 

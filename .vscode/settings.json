@@ -1,0 +1,7 @@
+{
+  "files.exclude": {
+    "**/*.pyo": true,
+    "**/__pycache__": true,
+    "**/__pycache__.*": true
+  }
+}

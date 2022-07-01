@@ -1,6 +1,8 @@
 from PyQt5 import QtWidgets, QtCore, QtGui
 import cv2
 import numpy as np
+from game2text.capture_object import CaptureObject
+from util.image_object import IMAGE_TYPE, ImageObject
 
 class CaptureScreen(QtWidgets.QSplashScreen):
     """QSplashScreen, that track mouse event for capturing screenshot."""
@@ -58,15 +60,27 @@ class CaptureScreen(QtWidgets.QSplashScreen):
             # grabbedPixMap.save('test.jpg', 'jpg')
 
             if self.onSnippingCompleted is not None:
-                self.onSnippingCompleted((img, self.origin, self.end))
+                image_object = ImageObject(img, IMAGE_TYPE.CV)
+                origin = (self.origin.x(), self.origin.y())
+                end = (self.end.x(), self.end.y())
+                capture_object = CaptureObject(image_object, origin, end)
+                self.onSnippingCompleted(capture_object)
             self.close()
 
-    def captureArea(self, box):
-        x1, y1, x2, y2 = box
+    def captureArea(self, box=None):
+        if box:
+            x1, y1, x2, y2 = box
+        else:
+            x1 = self.origin.x()
+            y1 = self.origin.y()
+            x2 = self.end.x()
+            y2 = self.end.y()
         primaryScreen = QtGui.QGuiApplication.primaryScreen()
         grabbedPixMap = primaryScreen.grabWindow(0, x1, y1, x2-x1, y2-y1)
         img = self.Pixmap_to_Opencv(grabbedPixMap)
-        return img
+        image_object = ImageObject(img, IMAGE_TYPE.CV)
+        capture_object = CaptureObject(image_object, (x1, y1), (x2, y2))
+        return capture_object
 
     def start(self):
         # QtWidgets.QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.CursorShape.CrossCursor))

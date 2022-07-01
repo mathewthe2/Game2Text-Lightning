@@ -1,6 +1,14 @@
-from g2t_tools import OCR_Engine, paddle_models_path
 from .paddle_ocr import Paddle_OCR
 from util.image_object import IMAGE_TYPE
+from enum import Enum
+
+paddle_models_path = "models/paddleocr"
+
+# Optical Character Recognition Engine
+class OCR_Engine(Enum):
+    PADDLE_OCR = 1
+    SPACE_OCR = 2
+    GOOGLE_VISION = 3
 
 class OCR():
     def __init__(self, path, engine=OCR_Engine.PADDLE_OCR):

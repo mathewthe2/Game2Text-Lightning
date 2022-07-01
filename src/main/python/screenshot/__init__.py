@@ -1,6 +1,11 @@
 import mss
 import numpy as np
 from PIL import Image
+from enum import Enum
+
+class Capture_Mode(Enum):
+    WINDOW = 0
+    DESKTOP_AREA = 1
 
 def get_screenshot():
     with mss.mss() as sct:

@@ -30,6 +30,18 @@ class CaptureObject():
         x, y = self.end
         return Point(x, y)
 
+    def get_region_info(self):
+        x, y = self.origin
+        x2, y2 = self.end
+        w = x2-x
+        h = y2-y
+        return 'Selected Region:({},{}) w:{} h:{}'.format(x, y, w, h)
+
+    def is_valid(self):
+        x, y = self.origin
+        x2, y2 = self.end 
+        return x < x2 and y < y2
+
 class Point():
     def __init__(self, x_cord, y_cord):
         self.x_cord = x_cord

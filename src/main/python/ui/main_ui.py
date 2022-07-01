@@ -1,6 +1,7 @@
 from PyQt5.QtWidgets import QGridLayout, QLabel, QComboBox, QPushButton, QWidget, QTabWidget,QVBoxLayout
 from PyQt5.QtCore import Qt
 from settings.anki_field_table import AnkiFieldTable
+from screenshot import Capture_Mode
 
 class UIMain(object):
     
@@ -21,17 +22,23 @@ class UIMain(object):
         self.captureLayout = QGridLayout()
         self.captureLayout.addWidget(QLabel('Capture Method'),0,0)
         self.captureComboBox = QComboBox()
-        self.captureComboBox.setEnabled(False)
         self.captureComboBox.addItem('Window')
         self.captureComboBox.addItem('Desktop Area')
+        self.captureComboBox.currentIndexChanged.connect(self.change_capture_mode_widgets)
         self.captureLayout.addWidget(self.captureComboBox,0,1)
         self.captureLayout.setColumnStretch(1, 1)
 
         # window
-        # if window
-        self.captureLayout.addWidget(QLabel('Window'),1,0)
+        self.captureWindowLabel = QLabel('Window')
+        self.captureLayout.addWidget(self.captureWindowLabel,1,0)
         self.captureWindowComboBox = QComboBox()
         self.captureLayout.addWidget(self.captureWindowComboBox,1,1)
+
+        # desktop area
+        self.selectRegionButton = QPushButton("Select region")
+        self.selectRegionButton.setHidden(True)
+        self.regionInfoLabel = QLabel('Selected Region:')
+        self.regionInfoLabel.setHidden(True)
 
         # start button
         self.start_button = QPushButton("Start")
@@ -42,7 +49,9 @@ class UIMain(object):
         # Create second tab
         self.tab2.layout = QVBoxLayout()
         self.tab2.layout.addLayout(self.captureLayout)
+        self.tab2.layout.addWidget(self.selectRegionButton)
         self.tab2.layout.addWidget(self.start_button)
+        self.tab2.layout.addWidget(self.regionInfoLabel)
         self.tab2.setLayout(self.tab2.layout)
         self.tab2.layout.setAlignment(Qt.AlignTop)
 
@@ -79,3 +88,20 @@ class UIMain(object):
         else:
             self.start_button.setText('Start')
             self.start_button.setStyleSheet("")
+
+    def change_capture_mode_widgets(self, index):
+        if index == Capture_Mode.DESKTOP_AREA.value:
+            # hide capture
+            self.captureWindowLabel.setHidden(True)
+            self.captureWindowComboBox.setHidden(True)
+            # show region
+            self.selectRegionButton.setHidden(False)
+            self.regionInfoLabel.setHidden(False)
+
+        elif index == Capture_Mode.WINDOW.value:
+            # show capture
+            self.captureWindowLabel.setHidden(False)
+            self.captureWindowComboBox.setHidden(False)
+            # hide region
+            self.selectRegionButton.setHidden(True)
+            self.regionInfoLabel.setHidden(True)

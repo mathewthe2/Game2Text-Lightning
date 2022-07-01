@@ -85,13 +85,9 @@ class Game2Text():
             overlay_window_visible = self.overlay_window.isVisible()
         if self.active_capture_object and not self.is_processing_image and not overlay_window_visible:
             # capture new image
-            # new_capture = ImageObject(screenshot, IMAGE_TYPE.CV)
             new_capture = self.capture()
             origin = new_capture.get_origin_point()
             end = new_capture.get_end_point()
-
-            # new_capture_box = ImageBox(self.active
-            # \_\\image_box.box, new_capture.get_image(IMAGE_TYPE.PIL))
             is_new_image = not self.active_capture_object.is_similar(new_capture)
             if not is_new_image:
                 return
@@ -99,6 +95,7 @@ class Game2Text():
             self.status = 'recapturing...'
             print(self.status)
 
+            # TODO: move overlay window without redeclaring it
             self.overlay_window = WebOverlay(origin.x(), origin.y(), abs(end.x()-origin.x()), abs(end.y()-origin.y()))
             self.overlay_window.setScreenshot(new_capture)
 

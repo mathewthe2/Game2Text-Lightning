@@ -1,174 +1,153 @@
-
 import sys
 from fbs_runtime.application_context.PyQt5 import ApplicationContext
-from PyQt5 import QtWidgets, QtCore
-from screenshot.CaptureScreen import CaptureScreen
-from g2t_tools import OCR_Engine, paddle_models_path
-from g2t_tools.ocr import OCR
-from util.box import box_to_qt
-from util.cursor import cursor_position
-from util.image_object import IMAGE_TYPE, ImageObject
-from image_box import ImageBox
-from detection_box import grouped_boxes
-from web_overlay import WebOverlay
-from blur_window import BlurWindow
+from PyQt5.QtWidgets import QMainWindow, QWidget
+from PyQt5.QtCore import Qt
+from screenshot.hwnd_manager import HWNDManager
+from anki.anki_connect import AnkiConnect
+from screenshot.capture_window import CaptureWindow
+from screenshot.capture_screen import CaptureScreen
+from screenshot import Capture_Mode
+from threading import Thread
+from ui.main_ui import UIMain
+from game2text.ocr import OCR, OCR_Engine, paddle_models_path
+from game2text import Game2Text
 
-WINDOW_WIDTH = 300
-WINDOW_HEIGHT = 100
+appctxt = ApplicationContext() 
 
-class Game2Text(QtWidgets.QMainWindow):
-    def __init__(self, appctxt):
+class Main(QMainWindow):
+    def __init__(self):
         super().__init__()
-        self.ocr_engine = OCR_Engine.PADDLE_OCR
-        self.ocr = OCR(appctxt.get_resource(paddle_models_path), self.ocr_engine)
+        self.setGeometry(500, 500, 400, 400)
+        self.setWindowTitle("Game2Text Lightning")
+        self.HWNDManager = HWNDManager()
+        self.AnkiConnect = AnkiConnect()
+        self.control_panel = ControlPanel(self)
+        self.setCentralWidget(self.control_panel)
 
-        self.active_image_box = None
-        self.is_processing_image = False
-        self.status = ''
+        # Setup OCR
+        ocr = OCR(appctxt.get_resource(paddle_models_path), OCR_Engine.PADDLE_OCR)
+        self.control_panel.set_game2text(Game2Text(ocr, self.capture))
 
-        self.overlay_window = WebOverlay()
-        self.blur_window = None
-        self.detection_boxes = []
-        self.text_boxes = []
-        self.results = []
-        self.characters = []
+        # Windows
+        window_thread = Thread(target = self.fetch_windows)
+        window_thread.start()
 
-        # PYQT GUI
+        # Anki
+        model_thread = Thread(target = self.fetch_models)
+        deck_thread = Thread(target = self.fetch_decks)
+        model_thread.start()
+        deck_thread.start()
+
+    def fetch_models(self):
+        self.models = self.AnkiConnect.fetch_anki_models()
+        self.control_panel.set_models(self.models)
+
+    def fetch_decks(self):
+        self.decks =  self.AnkiConnect.fetch_anki_decks()
+        self.control_panel.update_deck_options(self.decks)
+
+    def fetch_windows(self):
+        self.windows = self.HWNDManager.get_hwnd_titles()
+        self.control_panel.set_windows(self.windows)
+
+    def capture(self):
+        return self.control_panel.get_capture()
+
+class ControlPanel(QWidget, UIMain):
+    def __init__(self, parent):
+        QWidget.__init__(self, parent)
+        self.setupUi(self)
+        self.models = []
+
+        # Window Capture
+        self.windows = []
+        self.capture_window = CaptureWindow()
+
+        # Area Capture 
+        self.snipping_widget = CaptureScreen()
+        self.snipping_widget.onSnippingCompleted = self.on_snipping_completed
+        self.snipped_capture = None
+
+        self.game2text = None
+        self.running_ocr = False
+        self.capture_mode = Capture_Mode.WINDOW
+
+        self.captureComboBox.currentIndexChanged.connect(self.select_capture_mode)
+        self.captureWindowComboBox.currentIndexChanged.connect(self.select_window)
+        self.modelComboBox.currentIndexChanged.connect(self.select_model)
+        self.selectRegionButton.clicked.connect(self.select_area)
+        self.start_button.clicked.connect(self.toggle_ocr)
+
+    def select_model(self, index):
+        if self.models:
+            fields = self.models[index].fields
+            self.tableFields.setRowCount(len(fields))
+            self.tableFields.setFields(fields)
+            self.tableFields.show()
+
+    def update_model_options(self, options):
+        for option in options:
+            self.modelComboBox.addItem(option)
+
+    def update_deck_options(self, options):
+        for option in options:
+            self.deckComboBox.addItem(option)
+
+    def set_models(self, models):
+        self.models = models
+        self.update_model_options([model.model_name for model in self.models])
+
+    def set_windows(self, windows):
+        self.windows = windows
+        for window in windows:
+             self.captureWindowComboBox.addItem(window)
         
-        # setting the geometry of window
-        self.setGeometry(500, 500, WINDOW_WIDTH, WINDOW_HEIGHT)
+    def select_capture_mode(self, index):
+        self.capture_mode = Capture_Mode(index)
 
-        # set the title
-        self.setWindowTitle("Game2Text")
+    def select_window(self, index):
+        if self.windows:
+            self.start_button.setEnabled(True)
+            self.capture_window.setWindowTitle(self.windows[index])
 
-        # set always on top
-        self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
-
-        # pybutton = QtWidgets.QPushButton('OCR', self)
-        # pybutton.resize(100,32)
-        # pybutton.move(50, 50)    
-        # pybutton.clicked.connect(self.lightning)
-
-        sekectButton = QtWidgets.QPushButton('Select', self)
-        sekectButton.resize(100,32)
-        sekectButton.move(10, 10)    
-        sekectButton.clicked.connect(self.select_area) 
-
-        self.snippingWidget = CaptureScreen()
-        self.snippingWidget.onSnippingCompleted = self.on_snipping_completed
-
-        self.popup_timer = QtCore.QTimer()
-        self.popup_timer.timeout.connect(self.show_popup)
-        
-        self.recapture_timer = QtCore.QTimer()
-        self.recapture_timer.timeout.connect(self.recapture)
-
-    def detect_touched_box(self, point):
-        if not self.detection_boxes:
-            return None
-        total = [detection_box for detection_box in self.detection_boxes if detection_box.touches_point(point)]
-        return total
-
-    def show_popup(self):
-        x, y = cursor_position()
-
-        touched_boxes = self.detect_touched_box((x, y))
-        if touched_boxes:
-            if self.overlay_window.isVisible():
-                return
-
-            # TODO: merge touched_boxes into one grouped_box
-            touched_box = touched_boxes[0]
-            self.overlay_window.updateText(touched_box)
-            blur_x, blur_y, blur_w, blur_h = box_to_qt(touched_box.padded_box(30))
-            self.blur_window = BlurWindow(blur_x, blur_y, blur_w, blur_h)
-            self.blur_window.show()
-
-            # self.popup_timer.stop()
-            # self.overlay_window.resize_fixed(box_w, box_h)
-            # self.overlay_window.move(box_x1, box_y1)
-            if not self.overlay_window.isVisible():
-                self.overlay_window.show()
+    def get_capture(self):
+        if self.capture_mode == Capture_Mode.WINDOW:
+            return self.capture_window.get_capture()
+        elif self.capture_mode == Capture_Mode.DESKTOP_AREA:
+            return self.get_area_capture()
         else:
-            if self.overlay_window and not self.is_processing_image:
-                self.overlay_window.hide()
-            if self.blur_window and not self.is_processing_image:
-                self.blur_window.hide()
+            return None
 
     def select_area(self):
-        self.popup_timer.stop()
-        self.recapture_timer.stop()
-        self.hide()
-        self.snippingWidget.start()
+        self.game2text.stop()
+        self.snipping_widget.start()
 
-    def setActiveImage(self, image, origin, end):
-        box = origin.x(), origin.y(), end.x(), end.y()
-        self.active_image_box = ImageBox(box, image)
-    
-    def on_snipping_completed(self, data):
-        self.show()
-        self.setWindowState(QtCore.Qt.WindowActive)
-        self.is_processing_image = True
+    def get_area_capture(self):
+        return self.snipping_widget.captureArea()
 
-        image, origin, end = data
-        image_object = ImageObject(image, IMAGE_TYPE.CV)
-        self.setActiveImage(image_object.get_image(IMAGE_TYPE.PIL), origin, end)
-        self.text_boxes = self.ocr.get_text(image_object)
-        self.detection_boxes = grouped_boxes(self.text_boxes, origin=(origin.x(), origin.y()))
-        self.is_processing_image = False
-        self.overlay_window = WebOverlay(origin.x(), origin.y(), abs(end.x()-origin.x()), abs(end.y()-origin.y()))
-        self.overlay_window.setScreenshot(image_object)
-        self.popup_timer.start(40)
-        self.recapture_timer.start(500)
+    def on_snipping_completed(self, capture_object):
+        if capture_object.is_valid():
+            self.snipped_capture = capture_object
+            self.regionInfoLabel.setText(capture_object.get_region_info())
+            self.start_button.setEnabled(True)
+            # self.game2text.run()
 
-    def recapture(self):
-        overlay_window_visible = False
-        if self.overlay_window:
-            overlay_window_visible = self.overlay_window.isVisible()
-        if self.active_image_box and not self.is_processing_image and not overlay_window_visible:
-            # capture new image
-            screenshot = self.snippingWidget.captureArea(self.active_image_box.box)
-            new_capture = ImageObject(screenshot, IMAGE_TYPE.CV)
+    def set_game2text(self, game2text):
+        self.game2text = game2text
 
-            new_capture_box = ImageBox(self.active_image_box.box, new_capture.get_image(IMAGE_TYPE.PIL))
-            is_new_image = not self.active_image_box.is_similar(new_capture_box)
-            if not is_new_image:
-                return
-            self.is_processing_image = True
-            self.status = 'recapturing...'
-            print(self.status)
-            origin_x, origin_y, end_x, end_y = self.active_image_box.box
-            self.overlay_window.setScreenshot(new_capture)
-            text_boxes = self.ocr.get_text(new_capture)
-            self.status = 'got text...'
-            print(self.status)
-            same_text_boxes = len(text_boxes) == len(self.text_boxes)
-            if same_text_boxes:
-                for i in range(0, len(text_boxes)):
-                    if text_boxes[i].box != self.text_boxes[i].box or text_boxes[i].text != self.text_boxes[i].text:
-                        same_text_boxes = False
-            if same_text_boxes:
-                self.is_processing_image = False
-                return
-            self.detection_boxes = grouped_boxes(text_boxes, origin=(origin_x, origin_y))
-            
-            self.active_image_box = new_capture_box
-            self.is_processing_image = False
-
-    def closeEvent(self, event):
-        self.popup_timer.stop()
-        self.recapture_timer.stop()
-        self.snippingWidget.close()
-        if self.overlay_window:
-            self.overlay_window.close()
-        if self.blur_window:
-            self.blur_window.close()
+    def toggle_ocr(self):
+        if self.game2text:
+            if self.running_ocr:
+                self.game2text.stop()
+            else:
+                self.game2text.run()
+            self.running_ocr = not self.running_ocr
 
 def main():
-    appctxt = ApplicationContext()       # 1. Instantiate ApplicationContext
-    window = Game2Text(appctxt)
+    appctxt = ApplicationContext()       
+    window = Main()
     window.show()
-    exit_code = appctxt.app.exec_()      # 2. Invoke appctxt.app.exec_()
+    exit_code = appctxt.app.exec_()
     sys.exit(exit_code)
 
 if __name__ == '__main__':

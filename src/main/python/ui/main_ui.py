@@ -67,7 +67,7 @@ class UIMain(object):
         self.modelDeckLayout.setSpacing(10)
 
         # Table
-        self.tableFields = AnkiFieldTable([], 0, 2)
+        self.tableFields = AnkiFieldTable([], None, 0, 2)
         self.tableFields.hide()
 
         # First Tab

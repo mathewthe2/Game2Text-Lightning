@@ -17,8 +17,8 @@ class Main(QMainWindow):
         self.setGeometry(500, 500, 400, 400)
         self.setWindowTitle("Game2Text Lightning")
         self.HWNDManager = HWNDManager()
-        self.AnkiConnect = AnkiConnect()
-        self.control_panel = ControlPanel(self)
+        self.AnkiConnect = AnkiConnect(anki_models_path= appctxt.get_resource('anki/user_models.yaml'))
+        self.control_panel = ControlPanel(self, self.AnkiConnect)
         self.setCentralWidget(self.control_panel)
 
         # Setup OCR
@@ -51,10 +51,9 @@ class Main(QMainWindow):
         return self.control_panel.get_capture()
 
 class ControlPanel(QWidget, UIMain):
-    def __init__(self, parent):
+    def __init__(self, parent, AnkiConnect):
         QWidget.__init__(self, parent)
         self.setupUi(self)
-        self.models = []
 
         # Window Capture
         self.windows = []
@@ -75,11 +74,20 @@ class ControlPanel(QWidget, UIMain):
         self.selectRegionButton.clicked.connect(self.select_area)
         self.start_button.clicked.connect(self.toggle_ocr)
 
+        # Anki Settings
+        self.AnkiConnect = AnkiConnect
+        self.models = []
+        self.selected_model = None
+        self.tableFields.on_change = self.on_anki_options_update
+
+
     def select_model(self, index):
         if self.models:
-            fields = self.models[index].fields
+            self.selected_model = self.models[index]
+            fields = self.selected_model.fields
             self.tableFields.setRowCount(len(fields))
-            self.tableFields.setFields(fields)
+            field_value_map = self.AnkiConnect.get_field_value_map(self.selected_model.model_name)
+            self.tableFields.setData(fields, field_value_map)
             self.tableFields.show()
 
     def update_model_options(self, options):
@@ -133,12 +141,16 @@ class ControlPanel(QWidget, UIMain):
         self.game2text = game2text
 
     def toggle_ocr(self):
+        # TODO: use thread to avoid blocking GUI
         if self.game2text:
             if self.running_ocr:
                 self.game2text.stop()
             else:
                 self.game2text.run()
             self.running_ocr = not self.running_ocr
+
+    def on_anki_options_update(self, user_field_map):
+        self.AnkiConnect.update_user_model(self.selected_model.model_name, user_field_map)
 
 def main():
     appctxt = ApplicationContext()       

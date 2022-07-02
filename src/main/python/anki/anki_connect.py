@@ -2,19 +2,19 @@ import json
 import logging
 import urllib.request
 import time
+import yaml
 from threading import Thread 
 from .anki_model import AnkiModel
-
-# from .word_audio import get_jpod_audio_base64
-# ANKI_MODELS_FILENAME = 'ankimodels.yaml'
+# from .word_audio import get_jpod_audio_base64'
 
 def request(action, params):
     return {'action': action, 'params': params, 'version': 6}
 
 class AnkiConnect():
-    def __init__(self, model='Basic'):
+    def __init__(self, model='Basic', anki_models_path=''):
         self.port = 8765
         self.model = model
+        self.anki_models_path = anki_models_path
 
     def invoke(self, action, **params):
         try:
@@ -68,18 +68,48 @@ class AnkiConnect():
         result = self.invoke('modelNamesAndIds')
         return result
 
-    def store_file(self):
-        now = str(time.time())
-        filename = '_{}.jpg'.format(now)
-        print(filename)
-        data = "SGVsbG8sIHdvcmxkIQ=="
-        result = self.invoke('storeMediaFile', filename=filename, data=data)
-        return result
+    def get_user_models(self):
+        anki_models = []
+        with open(self.anki_models_path, 'r') as stream:
+            try:
+                ankiModels = yaml.safe_load(stream)
+                return ankiModels
+            except yaml.YAMLError as exc:
+                print(exc)
+        return anki_models
 
-    def store_picture(self, data):
-        filename = '_{}.jpg'.format(time.time())
-        result = self.invoke('storeMediaFile', filename=filename, data=data)
-        return result
+    def update_user_model(self, model_name, field_value_map):
+        new_model = {
+            'model_name': model_name,
+            'field_value_map': field_value_map
+        }
+        user_models = self.get_user_models()
+        result = [user_model for user_model in user_models if user_model['model_name'] != model_name]
+        result.append(new_model)
+        self.save_user_models(result)
+
+    def save_user_models(self, anki_models):
+        with open(self.anki_models_path, 'w') as outfile:
+            yaml.dump(anki_models, outfile, sort_keys=False, default_flow_style=False)
+            return outfile.name
+
+    def get_field_value_map(self, model_name):
+        models = self.get_user_models()
+        field_value_map = next((model['field_value_map'] for model in models if model['model_name'] == model_name), {})
+        return field_value_map
+
+    # def store_file(self):
+    #     now = str(time.time())
+    #     filename = '_{}.jpg'.format(now)
+    #     print(filename)
+    #     data = "SGVsbG8sIHdvcmxkIQ=="
+    #     result = self.invoke('storeMediaFile', filename=filename, data=data)
+    #     return result
+
+    # def store_picture(self, data):
+    #     filename = '_{}.jpg'.format(time.time())
+    #     result = self.invoke('storeMediaFile', filename=filename, data=data)
+    #     return result
 
     def create_anki_note(self, note_data=None):
         expression = note_data['expression']
@@ -111,22 +141,19 @@ class AnkiConnect():
         result = self.invoke('addNote', note=note)
         return result
 
-
-# def get_anki_models():
-#     filename = None # str(Path(bundle_dir, 'anki', ANKI_MODELS_FILENAME))
-#     ankiModels = []
-#     with open(filename, 'r') as stream:
-#         try:
-#             ankiModels = yaml.safe_load(stream)
-#             return ankiModels
-#         except yaml.YAMLError as exc:
-#             print(exc)
-
-#     return ankiModels
-
-
 if __name__  == '__main__':
-    ac = AnkiConnect('Mining')
+    from fbs_runtime.application_context.PyQt5 import ApplicationContext
+    appctxt = ApplicationContext()
+    ac = AnkiConnect('Mining', appctxt.get_resource('anki/user_models.yaml'))
+
+    # from __init__ import Anki_Values
+    # am = { 'model_name': 'Basic',
+    #         'field_value_map': {
+    #             'front': Anki_Values.EXPRESSION.name,
+    #             'back': Anki_Values.DEFINITION.name
+    #         }}
+    # print(ac.save_user_models([am]))
+    # print(ac.get_user_models())
 
     # from PIL import Image
     # import base64
@@ -144,7 +171,7 @@ if __name__  == '__main__':
     # note_data['definition'] = 'def'
     # print(ac.create_anki_note(note_data))
 
-    print(ac.fetch_anki_fields())
+    # print(ac.fetch_anki_fields())
     # print(ac.fetch_models())
     # print(ac.fetch_anki_fields('Basic'))
     # print(ac.create_anki_note())

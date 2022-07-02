@@ -3,6 +3,7 @@ from fbs_runtime.application_context.PyQt5 import ApplicationContext
 from PyQt5.QtWidgets import QMainWindow, QWidget
 from screenshot.hwnd_manager import HWNDManager
 from anki.anki_connect import AnkiConnect
+from call_handler import CallHandler
 from screenshot.capture_window import CaptureWindow
 from screenshot.capture_screen import CaptureScreen
 from screenshot import Capture_Mode
@@ -18,13 +19,10 @@ class Main(QMainWindow):
         self.setWindowTitle("Game2Text Lightning")
         self.HWNDManager = HWNDManager()
         self.AnkiConnect = AnkiConnect(anki_models_path= appctxt.get_resource('anki/user_models.yaml'))
-        self.control_panel = ControlPanel(self, self.AnkiConnect)
+        self.ocr = OCR(appctxt.get_resource(paddle_models_path), OCR_Engine.PADDLE_OCR)
+        self.call_handler = CallHandler(appctxt)
+        self.control_panel = ControlPanel(self)
         self.setCentralWidget(self.control_panel)
-
-        # Setup OCR
-        ocr = OCR(appctxt.get_resource(paddle_models_path), OCR_Engine.PADDLE_OCR)
-        self.control_panel.set_game2text(Game2Text(ocr, self.capture))
-
         # Windows
         window_thread = Thread(target = self.fetch_windows)
         window_thread.start()
@@ -51,7 +49,7 @@ class Main(QMainWindow):
         return self.control_panel.get_capture()
 
 class ControlPanel(QWidget, UIMain):
-    def __init__(self, parent, AnkiConnect):
+    def __init__(self, parent):
         QWidget.__init__(self, parent)
         self.setupUi(self)
 
@@ -64,7 +62,8 @@ class ControlPanel(QWidget, UIMain):
         self.snipping_widget.onSnippingCompleted = self.on_snipping_completed
         self.snipped_capture = None
 
-        self.game2text = None
+        self.call_handler = parent.call_handler # handle calls between web and python
+        self.game2text = Game2Text(parent.ocr, parent.capture, self.call_handler)
         self.running_ocr = False
         self.capture_mode = Capture_Mode.WINDOW
 
@@ -75,7 +74,7 @@ class ControlPanel(QWidget, UIMain):
         self.start_button.clicked.connect(self.toggle_ocr)
 
         # Anki Settings
-        self.AnkiConnect = AnkiConnect
+        self.AnkiConnect = parent.AnkiConnect
         self.models = []
         self.selected_model = None
         self.tableFields.on_change = self.on_anki_options_update
@@ -89,6 +88,7 @@ class ControlPanel(QWidget, UIMain):
             field_value_map = self.AnkiConnect.get_field_value_map(self.selected_model.model_name)
             self.tableFields.setData(fields, field_value_map)
             self.tableFields.show()
+            self.call_handler.set_model(self.selected_model.model_name)
 
     def update_model_options(self, options):
         for option in options:
@@ -135,13 +135,8 @@ class ControlPanel(QWidget, UIMain):
             self.snipped_capture = capture_object
             self.regionInfoLabel.setText(capture_object.get_region_info())
             self.start_button.setEnabled(True)
-            # self.game2text.run()
-
-    def set_game2text(self, game2text):
-        self.game2text = game2text
 
     def toggle_ocr(self):
-        # TODO: use thread to avoid blocking GUI
         if self.game2text:
             if self.running_ocr:
                 self.game2text.stop()

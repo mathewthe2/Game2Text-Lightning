@@ -4,14 +4,18 @@ from util.cursor import cursor_position
 from util.detection_box import grouped_boxes
 from web_overlay import WebOverlay
 from pyqt_custom.blur_window import BlurWindow
+from .workers.ocr_worker import OcrWorker
+from .workers.capture_worker import CaptureWorker
 
-POPUP_INTERVAL = 45
+POPUP_INTERVAL = 100
 RECAPTURE_INTERVAL = 500
 
 class Game2Text():
-    def __init__(self, ocr, capture):
+    def __init__(self, ocr, capture, handler):
+        super().__init__()
         self.ocr = ocr
         self.capture = capture
+        self.handler = handler
         self.is_processing_image = False
         self.active_capture_object = None
         self.is_processing_image = False
@@ -30,14 +34,14 @@ class Game2Text():
         self.recapture_timer = QtCore.QTimer()
         self.recapture_timer.timeout.connect(self.recapture)
 
+        self.ocr_worker = OcrWorker(self.ocr)
+        self.ocr_worker.text_boxes_signal.connect(self.on_receive_text_boxes)
+
+        self.capture_worker = CaptureWorker(self.capture)
+        self.capture_worker.capture_signal.connect(self.on_receive_capture)
+
     def run(self):
-        capture_object = self.capture()
-        if not capture_object:
-            return
-        self.is_processing_image = True
-        self.setActiveImage(capture_object)
-        text_boxes = self.ocr.get_text(capture_object.image_object)
-        self.process_ocr(capture_object, text_boxes)
+        self.capture_worker.start()
         self.popup_timer.start(POPUP_INTERVAL)
         self.recapture_timer.start(RECAPTURE_INTERVAL)
 
@@ -47,11 +51,10 @@ class Game2Text():
         origin = capture_object.get_origin_point()
         end = capture_object.get_end_point()
         self.detection_boxes = grouped_boxes(self.text_boxes, origin=(origin.x(), origin.y()))
-        self.set_detection_boxes(text_boxes, origin)
         self.is_processing_image = False
         window_geometry = (origin.x(), origin.y(), abs(end.x()-origin.x()), abs(end.y()-origin.y()))
         if not self.overlay_window:
-            self.overlay_window = WebOverlay(*window_geometry)
+            self.overlay_window = WebOverlay(*window_geometry, self.handler)
         else:
             self.overlay_window.setGeometry(*window_geometry)
         self.overlay_window.setScreenshot(image_object)
@@ -64,7 +67,6 @@ class Game2Text():
 
     def show_popup(self):
         x, y = cursor_position()
-
         touched_boxes = self.detect_touched_box((x, y))
         if touched_boxes:
             if self.overlay_window.isVisible():
@@ -91,15 +93,24 @@ class Game2Text():
             overlay_window_visible = self.overlay_window.isVisible()
         if self.active_capture_object and not self.is_processing_image and not overlay_window_visible:
             # capture new image
-            new_capture = self.capture()
-            is_new_image = not self.active_capture_object.is_similar(new_capture)
+            self.capture_worker.start()
+
+    def on_receive_capture(self, capture_object):
+        if not capture_object:
+            return
+        self.is_processing_image = True
+        if self.active_capture_object:
+            is_new_image = not self.active_capture_object.is_similar(capture_object)
             if not is_new_image:
+                self.is_processing_image = False
                 return
-            self.is_processing_image = True
-            self.status = 'recapturing...'
-            print(self.status)
-            text_boxes = self.ocr.get_text(new_capture.image_object)
-            self.process_ocr(new_capture, text_boxes)
+        self.setActiveImage(capture_object)
+        self.ocr_worker.set_capture(capture_object)
+        self.ocr_worker.start()
+
+    def on_receive_text_boxes(self, result):
+        text_boxes, capture = result
+        self.process_ocr(capture, text_boxes)
 
     def setActiveImage(self, capture_object):
         self.active_capture_object = capture_object

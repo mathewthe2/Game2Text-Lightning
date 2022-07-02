@@ -21,12 +21,12 @@ class WebOverlay(QWebEngineView):
     ready = False
     containers = 0
 
-    def __init__(self, x=0, y=0, w=800, h=300):
+    def __init__(self, x=0, y=0, w=800, h=300, handler=None):
         super(WebOverlay, self).__init__()    
 
         # Web channel
         self.channel = QWebChannel()
-        self.handler = CallHandler()
+        self.handler = handler
         self.channel.registerObject('handler', self.handler)
         self.page().setWebChannel(self.channel)
 

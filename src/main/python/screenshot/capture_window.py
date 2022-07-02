@@ -6,7 +6,8 @@ import win32gui
 import cv2
 from PIL import ImageGrab
 import numpy as np
-from util.image_object import IMAGE_TYPE, ImageObject
+from util.image.image_object import ImageObject
+from util.image import IMAGE_TYPE
 from .hwnd_manager import HWNDManager
 from game2text.capture_object import CaptureObject
 
@@ -32,10 +33,10 @@ class CaptureWindow():
         self.win_hwnd = self.hwnd_manager.get_hwnd(self.window_title)
 
         # check if it has focus
-        if (self.win_hwnd and self.win_hwnd != win32gui.GetForegroundWindow()):
-            print('not focused')
-            win32gui.SetActiveWindow(self.win_hwnd)
-            win32gui.SetForegroundWindow(self.win_hwnd)
+        # if (self.win_hwnd and self.win_hwnd != win32gui.GetForegroundWindow()):
+        #     print('not focused')
+        #     win32gui.SetActiveWindow(self.win_hwnd)
+        #     win32gui.SetForegroundWindow(self.win_hwnd)
 
     def callback(self, hwnd, extra):
         wnd_name = win32gui.GetWindowText(hwnd)

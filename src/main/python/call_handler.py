@@ -1,5 +1,5 @@
 
-from PyQt5.QtCore import QUrl, Qt, QObject, pyqtSlot, QVariant
+from PyQt5.QtCore import QObject, pyqtSlot, QVariant
 from fbs_runtime.application_context.PyQt5 import ApplicationContext
 from japanese.pitch import Pitch
 from anki.anki_connect import AnkiConnect

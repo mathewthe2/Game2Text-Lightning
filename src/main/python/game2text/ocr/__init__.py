@@ -1,5 +1,5 @@
 from .paddle_ocr import Paddle_OCR
-from util.image_object import IMAGE_TYPE
+from util.image import IMAGE_TYPE
 from enum import Enum
 
 paddle_models_path = "models/paddleocr"

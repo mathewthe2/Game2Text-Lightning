@@ -2,11 +2,9 @@
 from PyQt5 import QtCore
 from util.box import box_to_qt
 from util.cursor import cursor_position
-from util.image_object import IMAGE_TYPE, ImageObject
-from image_box import ImageBox
-from detection_box import grouped_boxes
+from util.detection_box import grouped_boxes
 from web_overlay import WebOverlay
-from blur_window import BlurWindow
+from pyqt_custom.blur_window import BlurWindow
 
 POPUP_INTERVAL = 45
 RECAPTURE_INTERVAL = 500
@@ -35,6 +33,8 @@ class Game2Text():
 
     def run(self):
         capture_object = self.capture()
+        if not capture_object:
+            return
         image_object = capture_object.image_object
         origin = capture_object.get_origin_point()
         end = capture_object.get_end_point()
@@ -95,13 +95,13 @@ class Game2Text():
             self.status = 'recapturing...'
             print(self.status)
 
-            # TODO: move overlay window without redeclaring it
-            self.overlay_window = WebOverlay(origin.x(), origin.y(), abs(end.x()-origin.x()), abs(end.y()-origin.y()))
+            self.overlay_window.setGeometry(origin.x(), origin.y(), abs(end.x()-origin.x()), abs(end.y()-origin.y()))
             self.overlay_window.setScreenshot(new_capture)
 
             text_boxes = self.ocr.get_text(new_capture)
             self.status = 'got text...'
             print(self.status)
+            # stop if same textboxes and same origin
             # same_text_boxes = len(text_boxes) == len(self.text_boxes)
             # if same_text_boxes:
             #     for i in range(0, len(text_boxes)):

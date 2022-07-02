@@ -1,14 +1,8 @@
 import numpy as np
-import cv2
 from PIL import Image
-from enum import Enum
 import base64
 from io import BytesIO
-
-class IMAGE_TYPE(Enum):
-    CV = 1
-    PIL = 2
-    NP = 3
+from . import IMAGE_TYPE
 
 class ImageObject():
     def __init__(self, image, type=IMAGE_TYPE.PIL):

@@ -2,7 +2,8 @@ from PyQt5 import QtWidgets, QtCore, QtGui
 import cv2
 import numpy as np
 from game2text.capture_object import CaptureObject
-from util.image_object import IMAGE_TYPE, ImageObject
+from util.image.image_object import ImageObject
+from util.image import IMAGE_TYPE
 
 class CaptureScreen(QtWidgets.QSplashScreen):
     """QSplashScreen, that track mouse event for capturing screenshot."""

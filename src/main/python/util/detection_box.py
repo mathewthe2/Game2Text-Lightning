@@ -1,4 +1,4 @@
-from util.box import combine_boxes, rect_distance
+from .box import combine_boxes, rect_distance
 
 class DetectionBox():
     def __init__(self, box, text_boxes):

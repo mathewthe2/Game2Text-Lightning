@@ -1,7 +1,6 @@
 import sys
 from fbs_runtime.application_context.PyQt5 import ApplicationContext
 from PyQt5.QtWidgets import QMainWindow, QWidget
-from PyQt5.QtCore import Qt
 from screenshot.hwnd_manager import HWNDManager
 from anki.anki_connect import AnkiConnect
 from screenshot.capture_window import CaptureWindow
@@ -12,10 +11,8 @@ from ui.main_ui import UIMain
 from game2text.ocr import OCR, OCR_Engine, paddle_models_path
 from game2text import Game2Text
 
-appctxt = ApplicationContext() 
-
 class Main(QMainWindow):
-    def __init__(self):
+    def __init__(self, appctxt):
         super().__init__()
         self.setGeometry(500, 500, 400, 400)
         self.setWindowTitle("Game2Text Lightning")
@@ -145,7 +142,7 @@ class ControlPanel(QWidget, UIMain):
 
 def main():
     appctxt = ApplicationContext()       
-    window = Main()
+    window = Main(appctxt)
     window.show()
     exit_code = appctxt.app.exec_()
     sys.exit(exit_code)

@@ -1,6 +1,6 @@
 from re import X
-from util.image_object import IMAGE_TYPE
-from image_box import ImageBox
+from util.image import IMAGE_TYPE
+from util.image.image_box import ImageBox
 
 class CaptureObject():
     def __init__(self, image_object, origin, end):

@@ -1,5 +1,6 @@
 import win32gui
 import logging
+from pyqt_custom.message import Message
 
 class HWNDManager():
     hwnd_title = dict()
@@ -12,6 +13,7 @@ class HWNDManager():
             return hwnd
         except:
             logging.error('hwnd of window not found')
+            Message().show_erro('window handle not found')
             return None
 
     def get_hwnd_titles(self):

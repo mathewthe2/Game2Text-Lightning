@@ -1,6 +1,6 @@
 from paddleocr import PaddleOCR
 from pathlib import Path
-from text_box import TextBox
+from util.text_box import TextBox
 
 class Paddle_OCR():
     ocr = None

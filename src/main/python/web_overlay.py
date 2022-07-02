@@ -32,7 +32,8 @@ class WebOverlay(QWebEngineView):
 
         # Window Attributes
         self.setGeometry(x, y, w, h)
-        self.resize_fixed(w, h)
+        self.resize(w, h)
+        # self.resize_fixed(w, h)
    
         self.setWindowFlags(
             Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint
@@ -43,11 +44,11 @@ class WebOverlay(QWebEngineView):
         self.page().setBackgroundColor(Qt.transparent)
         self.load_html()
 
-    def resize_fixed(self, w, h):
-        self.setFixedWidth(w)
-        self.setFixedHeight(h)
-        self.w = w                  
-        self.h = h
+    # def resize_fixed(self, w, h):
+    #     self.setFixedWidth(w)
+    #     self.setFixedHeight(h)
+    #     self.w = w                  
+    #     self.h = h
 
     def setReady(self, ready):
         self.ready = ready 

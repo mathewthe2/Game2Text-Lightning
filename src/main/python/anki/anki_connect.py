@@ -42,6 +42,8 @@ class AnkiConnect():
 
     def fetch_anki_models(self):
         models = self.fetch_models()
+        if not models:
+            return[]
         model_names = list(models.keys())
         field_lists = [{} for x in model_names]
         threads = []
@@ -62,11 +64,21 @@ class AnkiConnect():
 
     def fetch_anki_decks(self):
         result = self.invoke('deckNames')
-        return result
+        if type(result) == list:
+            return result
+        else:
+            if type(result) == str:
+                logging.error(result)
+            return []
 
     def fetch_models(self):
         result = self.invoke('modelNamesAndIds')
-        return result
+        if type(result) == list:
+            return result
+        else:
+            if type(result) == str:
+                logging.error(result)
+            return []
 
     def get_user_models(self):
         anki_models = []

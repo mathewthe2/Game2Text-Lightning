@@ -101,11 +101,9 @@ class CaptureWindow():
                 continue
             # crop window area from the screenshot
             cropped_rgb = full_screen[y : y+h, x : x+w]
-            # convert from RGB to BGR order so that colors are displayed correctly
-            cropped_bgr = cv2.cvtColor(cropped_rgb, cv2.COLOR_RGB2BGR)
             active = False
             
-        image_object = ImageObject(cropped_bgr, IMAGE_TYPE.CV)
+        image_object = ImageObject(cropped_rgb, IMAGE_TYPE.CV)
         capture_object = CaptureObject(image_object, origin, end)
         return capture_object
 

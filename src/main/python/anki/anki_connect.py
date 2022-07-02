@@ -73,7 +73,7 @@ class AnkiConnect():
 
     def fetch_models(self):
         result = self.invoke('modelNamesAndIds')
-        if type(result) == list:
+        if type(result) == dict:
             return result
         else:
             if type(result) == str:
@@ -114,6 +114,9 @@ class AnkiConnect():
             field_value_map = next((model['field_value_map'] for model in models if model['model_name'] == model_name), {})
         return field_value_map
 
+    def set_model(self, model_name):
+        self.model = model_name
+
     # def store_file(self):
     #     now = str(time.time())
     #     filename = '_{}.jpg'.format(now)
@@ -127,31 +130,34 @@ class AnkiConnect():
     #     result = self.invoke('storeMediaFile', filename=filename, data=data)
     #     return result
 
-    def create_anki_note(self, note_data=None):
-        expression = note_data['expression']
-        definition = note_data['definition']
-        reading = note_data['reading']
-        sentence = note_data['sentence']
+    def create_anki_note(self, note_data):
+        field_value_map = self.get_field_value_map(self.model)
+        if not field_value_map:
+            return
 
+        fields = {}
+        screenshot_field = None
+        for field, value in field_value_map.items():
+            if value.lower() == 'screenshot':
+                if 'screenshot' in note_data:
+                    screenshot_field = field
+            else:
+                fields[field] = note_data[value.lower()]
+                
         note = {
             "deckName": "Default",
             "modelName": self.model,
-            "fields": {
-                "Word": expression,
-                "Definition": definition,
-                "Reading": reading,
-                "Sentence": sentence
-            },
+            "fields": fields,
             "tags": [
                 "game2text"
             ],
         }
-        if 'screenshot' in note_data:
+        if screenshot_field:
             note["picture"] =  [{
                 "data": note_data['screenshot'],
                 "filename": '_{}.jpg'.format(time.time()),
                 "fields": [
-                    "Screenshot"
+                   screenshot_field
                 ]
             }]
         result = self.invoke('addNote', note=note)
@@ -174,6 +180,7 @@ if __name__  == '__main__':
     # from PIL import Image
     # import base64
     # from io import BytesIO
+
     # image = Image.open(r'C:\Users\user\Documents\Game2Text-Lightning\src\main\persona.jpg')
     # buffered = BytesIO()
     # image.save(buffered, format="JPEG")
@@ -186,8 +193,3 @@ if __name__  == '__main__':
     # note_data['sentence'] = 'sent'
     # note_data['definition'] = 'def'
     # print(ac.create_anki_note(note_data))
-
-    # print(ac.fetch_anki_fields())
-    # print(ac.fetch_models())
-    # print(ac.fetch_anki_fields('Basic'))
-    # print(ac.create_anki_note())

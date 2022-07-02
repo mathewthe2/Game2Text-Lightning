@@ -18,9 +18,9 @@ class Main(QMainWindow):
         self.setGeometry(500, 500, 400, 400)
         self.setWindowTitle("Game2Text Lightning")
         self.HWNDManager = HWNDManager()
-        self.AnkiConnect = AnkiConnect(anki_models_path= appctxt.get_resource('anki/user_models.yaml'))
+        self.anki_connect = AnkiConnect(anki_models_path = appctxt.get_resource('anki/user_models.yaml'))
         self.ocr = OCR(appctxt.get_resource(paddle_models_path), OCR_Engine.PADDLE_OCR)
-        self.call_handler = CallHandler(appctxt)
+        self.call_handler = CallHandler(appctxt, self.anki_connect)
         self.control_panel = ControlPanel(self)
         self.setCentralWidget(self.control_panel)
         # Windows
@@ -34,11 +34,11 @@ class Main(QMainWindow):
         deck_thread.start()
 
     def fetch_models(self):
-        self.models = self.AnkiConnect.fetch_anki_models()
+        self.models = self.anki_connect.fetch_anki_models()
         self.control_panel.set_models(self.models)
 
     def fetch_decks(self):
-        self.decks =  self.AnkiConnect.fetch_anki_decks()
+        self.decks =  self.anki_connect.fetch_anki_decks()
         self.control_panel.update_deck_options(self.decks)
 
     def fetch_windows(self):
@@ -74,7 +74,7 @@ class ControlPanel(QWidget, UIMain):
         self.start_button.clicked.connect(self.toggle_ocr)
 
         # Anki Settings
-        self.AnkiConnect = parent.AnkiConnect
+        self.anki_connect = parent.anki_connect
         self.models = []
         self.selected_model = None
         self.tableFields.on_change = self.on_anki_options_update
@@ -85,10 +85,11 @@ class ControlPanel(QWidget, UIMain):
             self.selected_model = self.models[index]
             fields = self.selected_model.fields
             self.tableFields.setRowCount(len(fields))
-            field_value_map = self.AnkiConnect.get_field_value_map(self.selected_model.model_name)
+            field_value_map = self.anki_connect.get_field_value_map(self.selected_model.model_name)
             self.tableFields.setData(fields, field_value_map)
             self.tableFields.show()
-            self.call_handler.set_model(self.selected_model.model_name)
+            # self.call_handler.set_model(self.selected_model.model_name)
+            self.anki_connect.set_model(self.selected_model.model_name)
 
     def update_model_options(self, options):
         for option in options:
@@ -145,7 +146,7 @@ class ControlPanel(QWidget, UIMain):
             self.running_ocr = not self.running_ocr
 
     def on_anki_options_update(self, user_field_map):
-        self.AnkiConnect.update_user_model(self.selected_model.model_name, user_field_map)
+        self.anki_connect.update_user_model(self.selected_model.model_name, user_field_map)
 
 def main():
     appctxt = ApplicationContext()       

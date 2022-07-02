@@ -84,7 +84,9 @@ class AnkiConnect():
             'field_value_map': field_value_map
         }
         user_models = self.get_user_models()
-        result = [user_model for user_model in user_models if user_model['model_name'] != model_name]
+        result = []
+        if user_models:
+            result = [user_model for user_model in user_models if user_model['model_name'] != model_name]
         result.append(new_model)
         self.save_user_models(result)
 
@@ -95,7 +97,9 @@ class AnkiConnect():
 
     def get_field_value_map(self, model_name):
         models = self.get_user_models()
-        field_value_map = next((model['field_value_map'] for model in models if model['model_name'] == model_name), {})
+        field_value_map = {}
+        if models:
+            field_value_map = next((model['field_value_map'] for model in models if model['model_name'] == model_name), {})
         return field_value_map
 
     # def store_file(self):

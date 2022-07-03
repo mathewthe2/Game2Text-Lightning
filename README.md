@@ -40,7 +40,7 @@ fbs run
 
 Package.
 
-To package, (Visual C++ Redistributable for Visual Studio 2012)[https://www.microsoft.com/en-us/download/details.aspx?id=30679] is required. Install, then add the directory *C:\Windows\SysWOW64* to PATH (Windows environment variables).
+To package, [Visual C++ Redistributable for Visual Studio 2012](https://www.microsoft.com/en-us/download/details.aspx?id=30679) is required. Install, then add the directory *C:\Windows\SysWOW64* to PATH (Windows environment variables).
 
 ```bash
 fbs freeze

@@ -16,14 +16,18 @@ class ImageObject():
         elif type == IMAGE_TYPE.CV:
             open_cv_image = np.array(self.image.convert('RGB')) 
             # Convert RGB to BGR 
-            return open_cv_image[:, :, ::-1].copy() 
+            return open_cv_image[:, :, ::-1].copy()
 
     def cv_to_pil(self, image):
         # image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         return Image.fromarray(image)
 
-    def base_64(self):
+    def base_64(self, resized=True):
         buffered = BytesIO()
-        self.image.save(buffered, format="JPEG")
+        im = self.image
+        if resized:
+            size = 1280, 720
+            im.thumbnail(size, Image.ANTIALIAS)
+        im.save(buffered, format="JPEG")
         img_byte = buffered.getvalue()
         return  base64.b64encode(img_byte).decode()

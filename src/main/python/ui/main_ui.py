@@ -1,5 +1,6 @@
-from PyQt5.QtWidgets import QGridLayout, QLabel, QComboBox, QPushButton, QWidget, QTabWidget,QVBoxLayout
+from PyQt5.QtWidgets import QGridLayout, QCheckBox, QHBoxLayout, QLabel, QLineEdit, QComboBox, QPushButton, QWidget, QTabWidget,QVBoxLayout
 from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QIntValidator
 from settings.anki_field_table import AnkiFieldTable
 from screenshot import Capture_Mode
 
@@ -12,11 +13,13 @@ class UIMain(object):
         self.tabs = QTabWidget()
         self.tab1 = QWidget()
         self.tab2 = QWidget()
+        self.settingsTab = QWidget()
         self.tabs.resize(300,200)
         
         # Add tabs
-        self.tabs.addTab(self.tab2,"OCR")
-        self.tabs.addTab(self.tab1,"Anki")
+        self.tabs.addTab(self.tab1,"OCR")
+        self.tabs.addTab(self.tab2,"Anki")
+        self.tabs.addTab(self.settingsTab,"Settings")
 
         # Capture settings
         self.captureLayout = QGridLayout()
@@ -46,14 +49,14 @@ class UIMain(object):
         self.start_button.setCheckable(True)
         self.start_button.clicked.connect(self.changeColor)
 
-        # Create second tab
-        self.tab2.layout = QVBoxLayout()
-        self.tab2.layout.addLayout(self.captureLayout)
-        self.tab2.layout.addWidget(self.selectRegionButton)
-        self.tab2.layout.addWidget(self.start_button)
-        self.tab2.layout.addWidget(self.regionInfoLabel)
-        self.tab2.setLayout(self.tab2.layout)
-        self.tab2.layout.setAlignment(Qt.AlignTop)
+        # Create first tab
+        self.tab1.layout = QVBoxLayout()
+        self.tab1.layout.addLayout(self.captureLayout)
+        self.tab1.layout.addWidget(self.selectRegionButton)
+        self.tab1.layout.addWidget(self.start_button)
+        self.tab1.layout.addWidget(self.regionInfoLabel)
+        self.tab1.setLayout(self.tab1.layout)
+        self.tab1.layout.setAlignment(Qt.AlignTop)
 
         # Deck and model row
         self.modelDeckLayout = QGridLayout()
@@ -73,14 +76,36 @@ class UIMain(object):
         # reload anki button
         self.reloadAnkiButton = QPushButton("Reload")
 
-        # First Tab
-        self.tab1.layout = QVBoxLayout()
-        self.tab1.layout.addLayout(self.modelDeckLayout)
-        self.tab1.layout.addWidget(self.tableFields)
-        self.tab1.layout.addWidget(self.reloadAnkiButton)
-        self.tab1.layout.addWidget(QLabel('Make sure AnkiConnect is installed, and Anki is open.'))
-        self.tab1.setLayout(self.tab1.layout)
-        
+        # Second Tab
+        self.tab2.layout = QVBoxLayout()
+        self.tab2.layout.addLayout(self.modelDeckLayout)
+        self.tab2.layout.addWidget(self.tableFields)
+        self.tab2.layout.addWidget(self.reloadAnkiButton)
+        self.tab2.layout.addWidget(QLabel('Make sure AnkiConnect is installed, and Anki is open.'))
+        self.tab2.setLayout(self.tab2.layout)
+
+        # Settings
+        self.resizeInputRow = QHBoxLayout()
+        self.resizeCheckBox = QCheckBox("Resize Screenshot")
+        self.resizeCheckBox.setChecked(True)
+        self.resizeInputRow.addWidget(QLabel('Width'))
+        self.resizeWidthInput = QLineEdit()
+        self.resizeWidthInput.setValidator(QIntValidator())
+        self.resizeWidthInput.setText('1280')
+        self.resizeInputRow.addWidget(self.resizeWidthInput)
+        self.resizeInputRow.addWidget(QLabel('Height'))
+        self.resizeHeightInput = QLineEdit()
+        self.resizeHeightInput.setValidator(QIntValidator())
+        self.resizeHeightInput.setText('720')
+        self.resizeInputRow.addWidget(self.resizeHeightInput)
+
+        # Third Tab
+        self.settingsTab.layout = QVBoxLayout()
+        self.settingsTab.layout.addWidget(self.resizeCheckBox)
+        self.settingsTab.layout.addLayout(self.resizeInputRow)
+        self.settingsTab.setLayout(self.settingsTab.layout)
+        self.settingsTab.layout.setAlignment(Qt.AlignTop)
+
         # Add tabs to widget
         self.layout.addWidget(self.tabs)
         self.setLayout(self.layout)

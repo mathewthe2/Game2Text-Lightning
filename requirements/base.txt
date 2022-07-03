@@ -10,4 +10,5 @@ Pillow==8.4.0
 PyYAML==6.0
 pyinstaller==4.10
 pynput==1.7.6
+pyperclip==1.8.2
 QtAwesome==1.1.1

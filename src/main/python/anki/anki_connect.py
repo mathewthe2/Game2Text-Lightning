@@ -2,10 +2,9 @@ import json
 import logging
 import urllib.request
 import time
-import yaml
 from threading import Thread 
 from .anki_model import AnkiModel
-# from .word_audio import get_jpod_audio_base64'
+from util.word_audio import get_jpod_audio_base64
 
 def request(action, params):
     return {'action': action, 'params': params, 'version': 6}
@@ -102,17 +101,28 @@ class AnkiConnect():
 
     def create_anki_note(self, note_data):
         if not self.anki_settings:
+            logging.error("Anki settings not configured")
             return
         field_value_map = self.anki_settings.get_field_value_map(self.model)
         if not field_value_map:
+            logging.error("Anki field value map not configured")
             return
 
         fields = {}
         screenshot_field = None
+        word_audio_field = None
         for field, value in field_value_map.items():
             if value.lower() == 'screenshot':
                 if 'screenshot' in note_data:
                     screenshot_field = field
+            elif value.lower() == 'word_audio':
+                if 'expression' in note_data and 'reading' in note_data:
+                    note_data['word_audio'] = get_jpod_audio_base64(note_data['expression'], note_data['reading'])
+                    word_audio_field = field
+            elif value.lower() == 'pitch':
+                if 'expression' in note_data and 'reading' in note_data:
+                    if self.anki_settings.pitch:
+                        fields[field] = self.anki_settings.pitch.get_pitch(note_data['expression'], note_data['reading'])
             else:
                 fields[field] = note_data[value.lower()]
                 
@@ -130,6 +140,14 @@ class AnkiConnect():
                 "filename": '_{}.jpg'.format(time.time()),
                 "fields": [
                    screenshot_field
+                ]
+            }]
+        if word_audio_field:
+            note['audio'] = [{
+                "data": note_data['word_audio'],
+                "filename": '_{}.mp3'.format(time.time()),
+                 "fields": [
+                   word_audio_field
                 ]
             }]
         result = self.invoke('addNote', note=note)

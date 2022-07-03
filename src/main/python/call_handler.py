@@ -1,7 +1,9 @@
 
 from PyQt5.QtCore import QObject, pyqtSlot, QVariant
 from japanese.pitch import Pitch
+from util.word_audio import get_jpod_audio_url
 import json
+import pyperclip
 
 # Bridge between PyQt and Web
 class CallHandler(QObject):
@@ -22,6 +24,10 @@ class CallHandler(QObject):
         result = self.ankiconnect.create_anki_note(vocab)
         print('created')
         print(result)
+
+    @pyqtSlot(QVariant)
+    def copy_to_clipboard(self, text):
+        pyperclip.copy(text)
 
     @pyqtSlot(QVariant, result=str)
     def get_pitch(self, args):

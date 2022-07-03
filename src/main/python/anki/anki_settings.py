@@ -1,4 +1,5 @@
 import yaml
+from japanese.pitch import Pitch
 
 class AnkiSettings():
     def __init__(self, appctxt):
@@ -6,6 +7,7 @@ class AnkiSettings():
         self.anki_defaults_path = appctxt.get_resource('anki/user_defaults.yaml')
         self.active_model = None
         self.active_field_value_map = None
+        self.pitch = Pitch(appctxt.get_resource('rikaisama/pitch_accents.sqlite'))
 
     def get_default_deck_model(self):
         with open(self.anki_defaults_path, 'r') as stream:

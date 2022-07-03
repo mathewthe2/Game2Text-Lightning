@@ -588,7 +588,7 @@ var rcxMain = {
       }
       else
       {
-        console.error("showPopup(): elem or parentNode is not defined!");
+        // console.error("showPopup(): elem or parentNode is not defined!");
       }
 
       popup.style.left = (x + content.scrollX) + 'px';
@@ -727,21 +727,40 @@ var rcxMain = {
 	},
 
 	copyToClip: function() {
-		console.error('copyToClip not impelemented');
-		return;
-		var text;
-
-		if ((text = this.savePrep(1, rcxConfig.saveformat)) != null) {
-			Components.classes['@mozilla.org/widget/clipboardhelper;1']
-				.getService(Components.interfaces.nsIClipboardHelper)
-				.copyString(text);
-			this.showPopup('Copied to clipboard.');
-		} else {
-			this.showPopup('Please select something to copy in Preferences.');
-			return;
-		}
+    if(this.lastFound[0].data)
+    {
+      var entryData = this.lastFound[0].data[0][0].match(/^(.+?)\s+(?:\[(.*?)\])?\s*\/(.+)\//);
+      var expression = entryData[1];
+      handler.copy_to_clipboard(expression);
+      this.showPopup(expression + ' copied to clipboard.');
+    }
+    // var text;
+		// if ((text = this.savePrep(1, rcxConfig.saveformat)) != null) {
+    //   navigator.clipboard.writeText(text);
+		// 	this.showPopup('Copied to clipboard.');
+		// } else {
+		// 	this.showPopup('Please select something to copy in Preferences.');
+		// 	return;
+		// }
 	},
 
+  scrollForwardDefinition: function()
+  {
+    if(this.lastFound[0].data)
+    {
+      var numberOfDefinitions = this.lastFound[0].data.length;
+      if (this.definitionPosition === undefined || this.lastFoundDefinition == undefined || this.lastFoundDefinition != this.lastFound[0].data) {
+        this.definitionPosition = 0;
+        this.lastFoundDefinition = this.lastFound[0].data;
+      } else if (this.definitionPosition == numberOfDefinitions-1) {
+        this.definitionPosition = 0;
+      } else {
+        this.definitionPosition += 1;
+      }
+      
+      console.error(this.definitionPosition);
+    }
+  },
 
   /* Get the CSS style to use when drawing the provided frequency */
   getFreqStyle: function(inFreqNum)
@@ -1108,6 +1127,7 @@ var rcxMain = {
         'definition': definition,
         'sentence': this.sentence
       }));
+      this.showPopup(expression + ' added to Anki.');
     }
   
 
@@ -2977,6 +2997,17 @@ var rcxMain = {
 
     case 83: // s - save to anki
       this.sendToAnki();
+    break;
+
+    case 67: // c - copy to clipboard
+      this.copyToClip();
+    break;
+
+    case 74: // j - scroll back definition
+    break; 
+
+    case 75: // k - scoll forward definition
+      this.scrollForwardDefinition();
     break;
 
 		case parseInt(rcxConfig.kbalternateview): // a - Alternate popup location

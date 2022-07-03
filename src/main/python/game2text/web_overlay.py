@@ -1,10 +1,8 @@
-import sys, os
-import json
+import sys
 from fbs_runtime.application_context.PyQt5 import ApplicationContext
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 from PyQt5.QtWebChannel import QWebChannel
 from PyQt5.QtCore import QUrl, Qt
-from call_handler import CallHandler
 
 sys.argv.append("--disable-web-security")
 

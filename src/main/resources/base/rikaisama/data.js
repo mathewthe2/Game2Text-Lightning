@@ -782,7 +782,6 @@ var rcxData = {
 
 			b.push('<table class="k-main-tb"><tr><td valign="top">');
 			b.push(box);
-			b.push('<div>anki here</div>');
 			b.push('<span class="k-kanji">' + entry.kanji + '</span><br/>');
 			if (!rcxConfig.hidedef) b.push('<div class="k-eigo">' + entry.eigo + '</div>');
 			b.push('<div class="k-yomi">' + yomi + '</div>');
@@ -865,7 +864,7 @@ var rcxData = {
 				}
 
 				if (e[2]) {
-					b.push('<div class="w-anki">+ anki</div>');
+					// b.push('<div class="w-anki">+ anki</div>');
 					if (pK == e[1]) k = '\u3001 <span class="w-kana">' + e[2] + '</span>';
 						else k += '<span class="w-kanji">' + e[1] + '</span> &#32; <span class="w-kana">' + e[2] + '</span>';
 					pK = e[1];

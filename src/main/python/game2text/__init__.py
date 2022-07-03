@@ -2,8 +2,8 @@ from PyQt5 import QtCore
 from util.box import box_to_qt
 from util.cursor import cursor_position
 from util.detection_box import grouped_boxes
-from web_overlay import WebOverlay
 from pyqt_custom.blur_window import BlurWindow
+from .web_overlay import WebOverlay
 from .workers.ocr_worker import OcrWorker
 from .workers.capture_worker import CaptureWorker
 

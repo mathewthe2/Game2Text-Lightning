@@ -2,6 +2,7 @@ import sys
 from fbs_runtime.application_context.PyQt5 import ApplicationContext
 from PyQt5.QtWidgets import QMainWindow, QWidget
 from anki.anki_connect import AnkiConnect
+from anki.anki_settings import AnkiSettings
 from call_handler import CallHandler
 from screenshot.capture_window import CaptureWindow
 from screenshot.capture_screen import CaptureScreen
@@ -9,7 +10,7 @@ from screenshot import Capture_Mode
 from screenshot.hwnd_worker import HWNDWorker
 from threading import Thread
 from ui.main_ui import UIMain
-from game2text.ocr import OCR, OCR_Engine, paddle_models_path
+from game2text.ocr import OCR
 from game2text import Game2Text
 
 class Main(QMainWindow):
@@ -18,8 +19,9 @@ class Main(QMainWindow):
         self.setGeometry(500, 500, 400, 400)
         self.setWindowTitle("Game2Text Lightning")
         self.hwnd_worker = HWNDWorker(interval=1000)
-        self.anki_connect = AnkiConnect(anki_models_path = appctxt.get_resource('anki/user_models.yaml'))
-        self.ocr = OCR(appctxt.get_resource(paddle_models_path), OCR_Engine.PADDLE_OCR)
+        self.anki_settings = AnkiSettings(appctxt)
+        self.anki_connect = AnkiConnect(anki_settings=self.anki_settings)
+        self.ocr = OCR(appctxt)
         self.call_handler = CallHandler(appctxt, self.anki_connect)
         self.control_panel = ControlPanel(self)
         self.setCentralWidget(self.control_panel)
@@ -41,7 +43,7 @@ class Main(QMainWindow):
 
     def fetch_decks(self):
         self.decks =  self.anki_connect.fetch_anki_decks()
-        self.control_panel.update_deck_options(self.decks)
+        self.control_panel.set_decks(self.decks)
 
     def capture(self):
         return self.control_panel.get_capture()
@@ -73,38 +75,73 @@ class ControlPanel(QWidget, UIMain):
 
         self.captureComboBox.currentIndexChanged.connect(self.select_capture_mode)
         self.captureWindowComboBox.activated.connect(self.select_window)
-        self.modelComboBox.currentIndexChanged.connect(self.select_model)
+        self.deckComboBox.currentIndexChanged.connect(self.on_deck_change)
+        self.deckComboBox.activated.connect(self.select_deck)
+        self.modelComboBox.currentIndexChanged.connect(self.on_model_change)
+        self.modelComboBox.activated.connect(self.select_model)
         self.selectRegionButton.clicked.connect(self.select_area)
         self.start_button.clicked.connect(self.toggle_ocr)
         self.reloadAnkiButton.clicked.connect(parent.load_anki)
 
         # Anki Settings
         self.anki_connect = parent.anki_connect
+        self.anki_settings = parent.anki_settings
+        self.decks = []
         self.models = []
+        self.deck_combo_ready = False
+        self.model_combo_ready = False
         self.selected_model = None
         self.tableFields.on_change = self.on_anki_options_update
 
-    def select_model(self, index):
+    def on_deck_change(self, index):
+        if not self.deck_combo_ready:
+            deck, model = self.anki_settings.get_default_deck_model()
+            if deck and deck in self.decks:
+                index = self.decks.index(deck)
+                self.deckComboBox.setCurrentIndex(index)
+                self.select_deck(index, persist=False)
+            else:
+                self.deckComboBox.setCurrentIndex(-1)
+            self.deck_combo_ready = True
+
+    def select_deck(self, index, persist=False):
+        if self.decks:
+            deck = self.decks[index]
+            self.anki_connect.set_deck(deck)
+            if persist:
+                self.anki_settings.update_default_deck(deck)
+
+    def on_model_change(self, index):
+        if not self.model_combo_ready:
+            deck, model = self.anki_settings.get_default_deck_model()
+            model_names = [model.model_name for model in self.models]
+            if model and model in model_names:
+                index = model_names.index(model)
+                self.modelComboBox.setCurrentIndex(index)
+                self.select_model(index, persist=False)
+            else:
+                self.modelComboBox.setCurrentIndex(-1)
+            self.model_combo_ready = True
+
+    def select_model(self, index, persist=True):
         if self.models:
             self.selected_model = self.models[index]
             fields = self.selected_model.fields
             self.tableFields.setRowCount(len(fields))
-            field_value_map = self.anki_connect.get_field_value_map(self.selected_model.model_name)
+            field_value_map = self.anki_settings.get_field_value_map(self.selected_model.model_name)
             self.tableFields.setData(fields, field_value_map)
             self.tableFields.show()
             self.anki_connect.set_model(self.selected_model.model_name)
+            if persist:
+                self.anki_settings.update_default_model(self.selected_model.model_name)
 
-    def update_model_options(self, options):
-        for option in options:
-            self.modelComboBox.addItem(option)
-
-    def update_deck_options(self, options):
-        for option in options:
-            self.deckComboBox.addItem(option)
+    def set_decks(self, decks):
+        self.decks = decks
+        self.deckComboBox.addItems(decks)
 
     def set_models(self, models):
         self.models = models
-        self.update_model_options([model.model_name for model in self.models])
+        self.modelComboBox.addItems([model.model_name for model in self.models])
 
     def set_windows(self, windows):
         self.windows = windows
@@ -155,7 +192,7 @@ class ControlPanel(QWidget, UIMain):
             self.running_ocr = not self.running_ocr
 
     def on_anki_options_update(self, user_field_map):
-        self.anki_connect.update_user_model(self.selected_model.model_name, user_field_map)
+        self.anki_settings.update_user_model(self.selected_model.model_name, user_field_map)
 
 def main():
     appctxt = ApplicationContext()       

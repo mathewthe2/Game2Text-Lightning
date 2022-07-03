@@ -11,10 +11,11 @@ def request(action, params):
     return {'action': action, 'params': params, 'version': 6}
 
 class AnkiConnect():
-    def __init__(self, model='Basic', anki_models_path=''):
+    def __init__(self, deck=None, model=None, anki_settings=None):
         self.port = 8765
         self.model = model
-        self.anki_models_path = anki_models_path
+        self.deck = deck
+        self.anki_settings = anki_settings
 
     def invoke(self, action, **params):
         try:
@@ -80,42 +81,11 @@ class AnkiConnect():
                 logging.error(result)
             return []
 
-    def get_user_models(self):
-        anki_models = []
-        with open(self.anki_models_path, 'r') as stream:
-            try:
-                ankiModels = yaml.safe_load(stream)
-                return ankiModels
-            except yaml.YAMLError as exc:
-                print(exc)
-        return anki_models
-
-    def update_user_model(self, model_name, field_value_map):
-        new_model = {
-            'model_name': model_name,
-            'field_value_map': field_value_map
-        }
-        user_models = self.get_user_models()
-        result = []
-        if user_models:
-            result = [user_model for user_model in user_models if user_model['model_name'] != model_name]
-        result.append(new_model)
-        self.save_user_models(result)
-
-    def save_user_models(self, anki_models):
-        with open(self.anki_models_path, 'w') as outfile:
-            yaml.dump(anki_models, outfile, sort_keys=False, default_flow_style=False)
-            return outfile.name
-
-    def get_field_value_map(self, model_name):
-        models = self.get_user_models()
-        field_value_map = {}
-        if models:
-            field_value_map = next((model['field_value_map'] for model in models if model['model_name'] == model_name), {})
-        return field_value_map
-
     def set_model(self, model_name):
         self.model = model_name
+
+    def set_deck(self, deck_name):
+        self.deck = deck_name
 
     # def store_file(self):
     #     now = str(time.time())
@@ -131,7 +101,9 @@ class AnkiConnect():
     #     return result
 
     def create_anki_note(self, note_data):
-        field_value_map = self.get_field_value_map(self.model)
+        if not self.anki_settings:
+            return
+        field_value_map = self.anki_settings.get_field_value_map(self.model)
         if not field_value_map:
             return
 
@@ -145,7 +117,7 @@ class AnkiConnect():
                 fields[field] = note_data[value.lower()]
                 
         note = {
-            "deckName": "Default",
+            "deckName": self.deck,
             "modelName": self.model,
             "fields": fields,
             "tags": [

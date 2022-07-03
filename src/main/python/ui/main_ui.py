@@ -70,10 +70,14 @@ class UIMain(object):
         self.tableFields = AnkiFieldTable([], None, 0, 2)
         self.tableFields.hide()
 
+        # reload anki button
+        self.reloadAnkiButton = QPushButton("Reload")
+
         # First Tab
         self.tab1.layout = QVBoxLayout()
         self.tab1.layout.addLayout(self.modelDeckLayout)
         self.tab1.layout.addWidget(self.tableFields)
+        self.tab1.layout.addWidget(self.reloadAnkiButton)
         self.tab1.layout.addWidget(QLabel('Make sure AnkiConnect is installed, and Anki is open.'))
         self.tab1.setLayout(self.tab1.layout)
         

@@ -1,12 +1,12 @@
 import sys
 from fbs_runtime.application_context.PyQt5 import ApplicationContext
 from PyQt5.QtWidgets import QMainWindow, QWidget
-from screenshot.hwnd_manager import HWNDManager
 from anki.anki_connect import AnkiConnect
 from call_handler import CallHandler
 from screenshot.capture_window import CaptureWindow
 from screenshot.capture_screen import CaptureScreen
 from screenshot import Capture_Mode
+from screenshot.hwnd_worker import HWNDWorker
 from threading import Thread
 from ui.main_ui import UIMain
 from game2text.ocr import OCR, OCR_Engine, paddle_models_path
@@ -17,21 +17,23 @@ class Main(QMainWindow):
         super().__init__()
         self.setGeometry(500, 500, 400, 400)
         self.setWindowTitle("Game2Text Lightning")
-        self.HWNDManager = HWNDManager()
+        self.hwnd_worker = HWNDWorker(interval=1000)
         self.anki_connect = AnkiConnect(anki_models_path = appctxt.get_resource('anki/user_models.yaml'))
         self.ocr = OCR(appctxt.get_resource(paddle_models_path), OCR_Engine.PADDLE_OCR)
         self.call_handler = CallHandler(appctxt, self.anki_connect)
         self.control_panel = ControlPanel(self)
         self.setCentralWidget(self.control_panel)
+
         # Windows
-        window_thread = Thread(target = self.fetch_windows)
-        window_thread.start()
+        self.hwnd_worker.hwnd_signal.connect(self.on_receive_window_titles)
+        self.hwnd_worker.start()
 
         # Anki
-        model_thread = Thread(target = self.fetch_models)
-        deck_thread = Thread(target = self.fetch_decks)
-        model_thread.start()
-        deck_thread.start()
+        self.load_anki()
+
+    def on_receive_window_titles(self, windows):
+        self.windows = windows
+        self.control_panel.set_windows(self.windows)
 
     def fetch_models(self):
         self.models = self.anki_connect.fetch_anki_models()
@@ -41,12 +43,14 @@ class Main(QMainWindow):
         self.decks =  self.anki_connect.fetch_anki_decks()
         self.control_panel.update_deck_options(self.decks)
 
-    def fetch_windows(self):
-        self.windows = self.HWNDManager.get_hwnd_titles()
-        self.control_panel.set_windows(self.windows)
-
     def capture(self):
         return self.control_panel.get_capture()
+    
+    def load_anki(self):
+        model_thread = Thread(target = self.fetch_models)
+        deck_thread = Thread(target = self.fetch_decks)
+        model_thread.start()
+        deck_thread.start()
 
 class ControlPanel(QWidget, UIMain):
     def __init__(self, parent):
@@ -55,6 +59,7 @@ class ControlPanel(QWidget, UIMain):
 
         # Window Capture
         self.windows = []
+        self.selected_window = None
         self.capture_window = CaptureWindow()
 
         # Area Capture 
@@ -62,23 +67,22 @@ class ControlPanel(QWidget, UIMain):
         self.snipping_widget.onSnippingCompleted = self.on_snipping_completed
         self.snipped_capture = None
 
-        self.call_handler = parent.call_handler # handle calls between web and python
-        self.game2text = Game2Text(parent.ocr, parent.capture, self.call_handler)
+        self.game2text = Game2Text(parent.ocr, parent.capture, parent.call_handler)
         self.running_ocr = False
         self.capture_mode = Capture_Mode.WINDOW
 
         self.captureComboBox.currentIndexChanged.connect(self.select_capture_mode)
-        self.captureWindowComboBox.currentIndexChanged.connect(self.select_window)
+        self.captureWindowComboBox.activated.connect(self.select_window)
         self.modelComboBox.currentIndexChanged.connect(self.select_model)
         self.selectRegionButton.clicked.connect(self.select_area)
         self.start_button.clicked.connect(self.toggle_ocr)
+        self.reloadAnkiButton.clicked.connect(parent.load_anki)
 
         # Anki Settings
         self.anki_connect = parent.anki_connect
         self.models = []
         self.selected_model = None
         self.tableFields.on_change = self.on_anki_options_update
-
 
     def select_model(self, index):
         if self.models:
@@ -88,7 +92,6 @@ class ControlPanel(QWidget, UIMain):
             field_value_map = self.anki_connect.get_field_value_map(self.selected_model.model_name)
             self.tableFields.setData(fields, field_value_map)
             self.tableFields.show()
-            # self.call_handler.set_model(self.selected_model.model_name)
             self.anki_connect.set_model(self.selected_model.model_name)
 
     def update_model_options(self, options):
@@ -105,16 +108,22 @@ class ControlPanel(QWidget, UIMain):
 
     def set_windows(self, windows):
         self.windows = windows
-        for window in windows:
-             self.captureWindowComboBox.addItem(window)
-        
+        self.captureWindowComboBox.clear()
+        new_selected_index = -1
+        for index, window in enumerate(windows):
+            self.captureWindowComboBox.addItem(window)
+            if window == self.selected_window:
+                new_selected_index = index
+        self.captureWindowComboBox.setCurrentIndex(new_selected_index)
+
     def select_capture_mode(self, index):
         self.capture_mode = Capture_Mode(index)
 
     def select_window(self, index):
         if self.windows:
             self.start_button.setEnabled(True)
-            self.capture_window.setWindowTitle(self.windows[index])
+            self.selected_window = self.windows[index]
+            self.capture_window.setWindowTitle(self.selected_window)
 
     def get_capture(self):
         if self.capture_mode == Capture_Mode.WINDOW:

@@ -12,9 +12,9 @@ class Paddle_OCR():
 
     def load_model(self, models_path):
         det_model_dir = str(Path(models_path, "whl", "det", "en", "en_ppocr_mobile_v2.0_det_infer"))
-        rect_model_dir = str(Path(models_path, "whl", "rect", "japan", "japan_mobile_v2.0_rec_infer"))
+        rec_model_dir = str(Path(models_path, "whl", "rec", "japan", "japan_mobile_v2.0_rec_infer"))
         cls_model_dir = str(Path(models_path, "whl", "cls", "ch_ppocr_mobile_v2.0_cls_infer"))
-        self.ocr = PaddleOCR(use_angle_cls=True, lang='japan', det_model_dir=det_model_dir, rect_model_dir=rect_model_dir, cls_model_dir=cls_model_dir)
+        self.ocr = PaddleOCR(use_angle_cls=True, lang='japan', det_model_dir=det_model_dir, rec_model_dir=rec_model_dir, cls_model_dir=cls_model_dir)
 
     def extract_text(self, np_image):
         result = self.ocr.ocr(np_image, cls=False)

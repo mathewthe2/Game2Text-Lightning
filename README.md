@@ -1,6 +1,19 @@
 # Game2Text-Lightning
-Experimental OCR for language learning.
+OCR-powered popup dictionary for games and desktop applications.
 
+![screencap](https://user-images.githubusercontent.com/13146030/177033791-eb5eba1b-e7cd-44ba-aa06-6836a3b71e75.jpg)
+
+## User Guide
+1. Using the dropdown beside **Window**, select your application or game.
+2. Press **Start**. 
+3. Back in your game, hover over the text elements.
+
+Note: select "Desktop Area" as your capture method to get a better capture.
+
+## Anki Guide
+1. Install AnkiConnect.
+2. Configure Anki settings on the second tab of Game2Text.
+3. When the popup dictionary is on the screen, use the hotkey "s" to add the vocabulary to your Anki decks.
 
 ## Windows development setup
 
@@ -27,7 +40,7 @@ fbs run
 
 Package.
 
-To package, (Visual C++ Redistributable for Visual Studio 2012)[https://www.microsoft.com/en-us/download/details.aspx?id=30679] is required. Install, then add the directory *C:\Windows\SysWOW64* to PATH (Windows environment variables).
+To package, [Visual C++ Redistributable for Visual Studio 2012](https://www.microsoft.com/en-us/download/details.aspx?id=30679) is required. Install, then add the directory *C:\Windows\SysWOW64* to PATH (Windows environment variables).
 
 ```bash
 fbs freeze

@@ -1,12 +1,12 @@
 import win32gui
-from window_object import WindowObject
+from .window_object import WindowObject
 
 class HWNDManager():
     window_dict = dict()
 
     def get_window_objects(self):
         win32gui.EnumWindows(self.get_all_hwnd, 0)
-        return self.window_dict.values()
+        return list(self.window_dict.values())
 
     def get_all_hwnd(self, hwnd, mouse):
         if win32gui.IsWindow(hwnd) and win32gui.IsWindowEnabled(hwnd) and win32gui.IsWindowVisible(hwnd) and win32gui.GetWindowText(hwnd):

@@ -25,13 +25,13 @@ class Main(QMainWindow):
         self.setCentralWidget(self.control_panel)
 
         # Windows
-        self.hwnd_worker.hwnd_signal.connect(self.on_receive_window_titles)
+        self.hwnd_worker.window_signal.connect(self.on_receive_windows)
         self.hwnd_worker.start()
 
         # Anki
         self.load_anki()
 
-    def on_receive_window_titles(self, windows):
+    def on_receive_windows(self, windows):
         self.windows = windows
         self.control_panel.set_windows(self.windows)
 
@@ -45,7 +45,7 @@ class Main(QMainWindow):
 
     def capture(self):
         return self.control_panel.get_capture()
-    
+
     def load_anki(self):
         model_thread = Thread(target = self.fetch_models)
         deck_thread = Thread(target = self.fetch_decks)

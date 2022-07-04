@@ -101,14 +101,15 @@ class ControlPanel(QWidget, UIMain):
         self.modelComboBox.addItems([model.model_name for model in self.models])
 
     def set_windows(self, windows):
-        self.windows = windows
-        self.captureWindowComboBox.clear()
-        new_selected_index = -1
-        for index, window in enumerate(windows):
-            self.captureWindowComboBox.addItem(window)
-            if window == self.selected_window:
-                new_selected_index = index
-        self.captureWindowComboBox.setCurrentIndex(new_selected_index)
+        if not self.captureWindowComboBox.view().isVisible():
+            self.windows = windows
+            self.captureWindowComboBox.clear()
+            self.captureWindowComboBox.addItems([window.title for window in windows])
+            if self.selected_window:
+                new_selected_index = next(i for i, window in enumerate(windows) if window.is_same(self.selected_window))
+                self.captureWindowComboBox.setCurrentIndex(new_selected_index)
+            else:
+                self.captureWindowComboBox.setCurrentIndex(-1)
 
     def select_capture_mode(self, index):
         self.capture_mode = Capture_Mode(index)
@@ -117,7 +118,7 @@ class ControlPanel(QWidget, UIMain):
         if self.windows:
             self.start_button.setEnabled(True)
             self.selected_window = self.windows[index]
-            self.capture_window.setWindowTitle(self.selected_window)
+            self.capture_window.set_window(self.selected_window)
 
     def get_capture(self):
         if self.capture_mode == Capture_Mode.WINDOW:

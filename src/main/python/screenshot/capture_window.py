@@ -1,60 +1,29 @@
-import sys
 import ctypes
 from ctypes.wintypes import HWND, RECT, DWORD
 from ctypes import *
-import win32gui
 import cv2
 from PIL import ImageGrab
 import numpy as np
 from util.image.image_object import ImageObject
 from util.image import IMAGE_TYPE
-from .hwnd_manager import HWNDManager
 from game2text.capture_object import CaptureObject
 
 dwmapi = ctypes.WinDLL("dwmapi")
 
 class CaptureWindow():
-    def __init__(self, window_title=''):
-        self.win_hwnd = -1
-        self.APP_NAME = window_title
-        self.window_title = window_title
-        self.hwnd_manager = HWNDManager()
+    def __init__(self, window=None):
+        self.window = window
 
-    def setWindowTitle(self, window_title):
-        self.window_title = window_title
-        self.APP_NAME = window_title
+    def set_window(self, window):
+        self.window = window
 
     def windowGrab(self):
-        if (self.window_title is None) or (len(self.window_title) == 0):
-            print('!!! window_title == None')
-            sys.exit(-1)
-        # try to find a window with matching title and valid coordinates
-        # win32gui.EnumWindows(self.callback, None)
-        self.win_hwnd = self.hwnd_manager.get_hwnd(self.window_title)
-
+        pass
         # check if it has focus
         # if (self.win_hwnd and self.win_hwnd != win32gui.GetForegroundWindow()):
         #     print('not focused')
         #     win32gui.SetActiveWindow(self.win_hwnd)
         #     win32gui.SetForegroundWindow(self.win_hwnd)
-
-    def callback(self, hwnd, extra):
-        wnd_name = win32gui.GetWindowText(hwnd)
-
-        if (wnd_name == self.APP_NAME):
-            rect = win32gui.GetWindowRect(hwnd)
-            x = rect[0]
-            y = rect[1]
-            w = rect[2] - x
-            h = rect[3] - y
-
-            # print("Name: %s" % wnd_name)
-            # print("\tLocation: (%d, %d)" % (x, y))
-            # print("\t    Size: (%d, %d)" % (w, h))
-
-            if (x >= 0 and y >= 0):
-                self.win_hwnd = hwnd
-        # print('result', self.win_hwnd)
 
     def show_capture(self):
         image = self.get_capture()
@@ -64,8 +33,7 @@ class CaptureWindow():
 
     # https://stackoverflow.com/questions/60067002/problems-while-taking-screenshots-of-a-window-and-displaying-it-with-opencv
     def get_capture(self):
-        self.windowGrab()
-        if not self.win_hwnd:
+        if not self.window:
             return None
 
         # workaround to allow ImageGrab to capture the whole screen
@@ -85,7 +53,7 @@ class CaptureWindow():
             # retrieve size and position of the window
             rect = RECT()
             DWMWA_EXTENDED_FRAME_BOUNDS = 9
-            dwmapi.DwmGetWindowAttribute(HWND(self.win_hwnd), DWORD(DWMWA_EXTENDED_FRAME_BOUNDS), ctypes.byref(rect), ctypes.sizeof(rect))
+            dwmapi.DwmGetWindowAttribute(HWND(self.window.hwnd), DWORD(DWMWA_EXTENDED_FRAME_BOUNDS), ctypes.byref(rect), ctypes.sizeof(rect))
             x = rect.left
             y = rect.top
             w = rect.right- x
@@ -109,22 +77,22 @@ class CaptureWindow():
 
 
 
-hw = dict()
-def get_all_hwnd(self, hwnd, mouse):
-    if win32gui.IsWindow(hwnd) and win32gui.IsWindowEnabled(hwnd) and win32gui.IsWindowVisible(hwnd):
-        hw.update({hwnd:win32gui.GetWindowText(hwnd)})
+# hw = dict()
+# def get_all_hwnd(self, hwnd, mouse):
+#     if win32gui.IsWindow(hwnd) and win32gui.IsWindowEnabled(hwnd) and win32gui.IsWindowVisible(hwnd):
+#         hw.update({hwnd:win32gui.GetWindowText(hwnd)})
 
-if __name__ == '__main__':
-    hw = dict()
-    def get_all_hwnd(hwnd, mouse):
-        if win32gui.IsWindow(hwnd) and win32gui.IsWindowEnabled(hwnd) and win32gui.IsWindowVisible(hwnd):
-            hw.update({hwnd:win32gui.GetWindowText(hwnd)})
-    win32gui.EnumWindows(get_all_hwnd, 0)
-    hwnd_title = ''
-    for h,t in hw.items():
-        if t is not "":
-            if 'persona.jpg' in t:
-                hwnd_title = t
-    print(hwnd_title)
-    cw = CaptureWindow(hwnd_title)
-    cw.show_capture()
+# if __name__ == '__main__':
+#     hw = dict()
+#     def get_all_hwnd(hwnd, mouse):
+#         if win32gui.IsWindow(hwnd) and win32gui.IsWindowEnabled(hwnd) and win32gui.IsWindowVisible(hwnd):
+#             hw.update({hwnd:win32gui.GetWindowText(hwnd)})
+#     win32gui.EnumWindows(get_all_hwnd, 0)
+#     hwnd_title = ''
+#     for h,t in hw.items():
+#         if t is not "":
+#             if 'persona.jpg' in t:
+#                 hwnd_title = t
+#     print(hwnd_title)
+#     cw = CaptureWindow(hwnd_title)
+#     cw.show_capture()

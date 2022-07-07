@@ -1,5 +1,5 @@
 # Game2Text-Lightning
-OCR-powered popup dictionary for games and desktop applications.
+OCR-based popup dictionary for language learning
 
 ![screencap](https://user-images.githubusercontent.com/13146030/177033791-eb5eba1b-e7cd-44ba-aa06-6836a3b71e75.jpg)
 

@@ -1,8 +1,8 @@
 import Quartz
-import LaunchServices
 from Cocoa import NSURL
 import Quartz.CoreGraphics as CG
 from AppKit import NSScreen
+# import LaunchServices
 
 def cartesian_capture(x, y, width, height, total_width, total_height, path):
     screen_width = NSScreen.mainScreen().frame().size.width
@@ -39,7 +39,7 @@ def screenshot(path, region = None):
 
     dest = Quartz.CGImageDestinationCreateWithURL(
         url,
-        LaunchServices.kUTTypePNG, # file type
+        'public.png', # LaunchServices.kUTTypePNG
         1, # 1 image in file
         None
         )

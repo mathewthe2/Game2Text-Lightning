@@ -1,7 +1,9 @@
 import logging
 from PyQt5.QtWidgets import QWidget
-from screenshot.capture_window import CaptureWindow
-from screenshot.capture_screen import CaptureScreen
+import sys
+if sys.platform == "win32":
+    from screenshot.capture_window import CaptureWindow
+from screenshot.SnippingWidget import SnippingWidget
 from screenshot import Capture_Mode
 from ui.main_ui import UIMain
 from game2text import Game2Text
@@ -14,11 +16,13 @@ class ControlPanel(QWidget, UIMain):
         # Window Capture
         self.windows = []
         self.selected_window = None
-        self.capture_window = CaptureWindow()
+        if sys.platform == "win32":
+            self.capture_window = CaptureWindow()
+        else:
+            self.capture_window = None
 
         # Area Capture 
-        self.snipping_widget = CaptureScreen()
-        self.snipping_widget.onSnippingCompleted = self.on_snipping_completed
+        self.snipping_widget = SnippingWidget(self.on_snipping_completed)
         self.snipped_capture = None
 
         self.game2text = Game2Text(parent.ocr, parent.capture, parent.call_handler)

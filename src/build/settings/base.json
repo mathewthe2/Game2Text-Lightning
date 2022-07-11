@@ -1,0 +1,37 @@
+{
+    "app_name": "Game2Text",
+    "author": "Mathew Chan",
+    "main_module": "src/main/python/main.py",
+    "version": "0.0.0",
+    "hidden_imports": [
+        "paddleocr.ppocr", 
+        "paddleocr.ppocr.data",
+        "paddleocr.ppocr.data.imaug",
+        "paddleocr.ppocr.data.imaug.iaa_augment",
+        "paddleocr.ppocr.data.imaug.random_crop_data",
+        "paddleocr.ppocr.postprocess",
+        "paddleocr.ppocr.utils",
+        "paddleocr.ppocr.utils.e2e_utils",
+        "paddleocr.ppocr.utils.logging",
+        "paddleocr.ppocr.utils.utility",
+        "paddleocr.ppstructure",
+        "paddleocr.ppstructure.table",
+        "paddleocr.ppstructure.table.matcher",
+        "paddleocr.ppstructure.table.predict_table",
+        "paddleocr.ppstructure.table.table_metric",
+        "paddleocr.ppstructure.utility",
+        "paddleocr.tools",
+        "paddleocr.tools.infer",
+        "paddleocr.tools.infer.predict_det",
+        "paddleocr.tools.infer.predict_rec",
+        "paddleocr.tools.infer.utility",
+        "scipy",
+        "scipy.special"
+    ],
+    "extra_pyinstaller_args": [
+        "--exclude-module", "matplotlib",
+        "--add-data", "../../venv/Lib/site-packages/Shapely.libs/;Shapely.libs/",
+        "--add-data", "../../venv/Lib/site-packages/paddle/libs;.",
+        "--add-data", "../../venv/Lib/site-packages/paddleocr/ppocr/utils/dict;paddleocr/ppocr/utils/dict/"
+    ]
+}

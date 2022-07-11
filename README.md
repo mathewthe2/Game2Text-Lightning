@@ -1,5 +1,5 @@
 # Game2Text-Lightning
-OCR-powered popup dictionary for games and desktop applications.
+OCR-based popup dictionary for language learning
 
 ![screencap](https://user-images.githubusercontent.com/13146030/177033791-eb5eba1b-e7cd-44ba-aa06-6836a3b71e75.jpg)
 
@@ -23,7 +23,7 @@ Set up virtual environment.
 
 ```bash
 virtualenv venv --python=python3.6
-call venv/scripts/activate.bat
+call venv/Scripts/activate.bat
 ```
 
 Install.
@@ -43,7 +43,7 @@ Package.
 To package, [Visual C++ Redistributable for Visual Studio 2012](https://www.microsoft.com/en-us/download/details.aspx?id=30679) is required. Install, then add the directory *C:\Windows\SysWOW64* to PATH (Windows environment variables).
 
 ```bash
-fbs freeze
+fbs freeze --debug
 ```
 
 ### Before packaging:

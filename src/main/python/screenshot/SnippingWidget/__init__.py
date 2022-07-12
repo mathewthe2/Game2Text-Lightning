@@ -1,6 +1,7 @@
-from .WinSnipper import WinSnipper
-from .MacSnipper import MacSnipper
 import sys
+from .WinSnipper import WinSnipper
+if sys.platform == 'darwin':
+    from .MacSnipper import MacSnipper
 
 class SnippingWidget():
     def __init__(self, onSnippingCompleted=None):

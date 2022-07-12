@@ -95,6 +95,11 @@ from paddleocr.ppocr.utils.e2e_utils.extract_textpoint_fast import generate_pivo
 ```
 
 ## Acknowledgments
-- JMDict
-- Paddle OCR
-- Rikaichan
+- [JMDict](http://www.edrdg.org/jmdict/j_jmdict.html)
+- [Paddle OCR](https://github.com/PaddlePaddle/PaddleOCR)
+- [Rikaichan](https://www.polarcloud.com/getrcx/)
+
+## Related Projects
+- [Dango Translator](https://github.com/PantsuDango/Dango-Translator)
+- [Game2Text](https://github.com/mathewthe2/Game2Text)
+- [Yomichan Anki](https://github.com/FooSoft/yomichan-anki)

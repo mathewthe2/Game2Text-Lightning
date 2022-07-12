@@ -1,3 +1,5 @@
+from util.display_window import DisplayWindow
+displayWindow = DisplayWindow(400, 400)
 import sys
 from fbs_runtime.application_context.PyQt5 import ApplicationContext
 from PyQt5.QtWidgets import QMainWindow
@@ -13,7 +15,7 @@ from control_panel import ControlPanel
 class Main(QMainWindow):
     def __init__(self, appctxt):
         super().__init__()
-        self.setGeometry(500, 500, 400, 400)
+        self.setGeometry(500, 500, displayWindow.width, displayWindow.height)
         self.setWindowTitle("Game2Text Lightning")
         self.hwnd_worker = HWNDWorker(interval=1000)
         self.anki_settings = AnkiSettings(appctxt)

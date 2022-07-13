@@ -17,6 +17,7 @@ class Main(QMainWindow):
         super().__init__()
         self.setGeometry(500, 500, displayWindow.width, displayWindow.height)
         self.setWindowTitle("Game2Text Lightning")
+        self.setWindowFlags(Qt.WindowCloseButtonHint)
         self.hwnd_worker = HWNDWorker(interval=1000)
         self.anki_settings = AnkiSettings(appctxt)
         self.anki_connect = AnkiConnect(anki_settings=self.anki_settings)

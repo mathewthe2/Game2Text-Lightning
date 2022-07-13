@@ -3,6 +3,7 @@ displayWindow = DisplayWindow(400, 400)
 import sys
 from fbs_runtime.application_context.PyQt5 import ApplicationContext
 from PyQt5.QtWidgets import QMainWindow
+from PyQt5.QtCore import Qt
 from anki.anki_connect import AnkiConnect
 from anki.anki_settings import AnkiSettings
 from call_handler import CallHandler

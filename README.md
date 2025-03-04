@@ -1,3 +1,6 @@
+# Archived
+Use [YomiNinja](https://github.com/matt-m-o/YomiNinja) instead.
+
 # Game2Text-Lightning
 OCR-based popup dictionary for language learning
 
